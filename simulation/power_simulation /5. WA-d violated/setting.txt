@@ -1,0 +1,4 @@
+Simulation settings for violation wa-D
+sim_6_1a = spnc^w = spnc^* (sim_10.3 in TQ github)
+sim_6_2a = spnc^w !=spnc^* , but ASPNC^w = ASPNC^* (sim 10.5 in TQ GitHub) 
+sim_6_3a = spnc^w !=spnc^* , and ASPNC^w != ASPNC^* (sim 10.4 in TQ Github)

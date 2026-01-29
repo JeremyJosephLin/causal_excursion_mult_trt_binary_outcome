@@ -1,0 +1,20 @@
+#!/bin/bash
+
+#SBATCH -A tiancq1_lab     		## account to use
+#SBATCH -J sim_1_1a         ## job name
+#SBATCH -p standard             ## partition/queue name
+#SBATCH --nodes=1               ## number of nodes the job will use
+#SBATCH --mem=10GB	             ## request 4 GB of memory
+#SBATCH --ntasks-per-node=1    ## number of tasks to launch per node
+                                ## is ceiling(100,000 MB / 3,072 MB/core) or 33 tasks
+#SBATCH --error=slurm-%J.err    ## error log file
+#SBATCH --mail-type=fail,end    #email notification
+#SBATCH --mail-user=jeremjl3@uci.edu
+
+#Save command hostname to the file
+module load R/4.1.2
+Rscript sim_power_1_1.R $1 $2 $3
+
+
+
+

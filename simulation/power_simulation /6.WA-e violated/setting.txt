@@ -1,0 +1,4 @@
+# simulation settings 
+sim_7_1a (TQ sim 11.6) all correct 
+sim_7_2a (TQ sim 11.8) correct AA, incorrect tau 
+sim_7_3a (TQ sim 11.7) incorrect AA and tau 

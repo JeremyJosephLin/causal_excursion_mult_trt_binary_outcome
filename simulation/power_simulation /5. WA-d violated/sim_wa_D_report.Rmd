@@ -1,0 +1,164 @@
+---
+title: "Simulation 6_1"
+author: "Jeremy J Lin"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document :
+    keep_tex: true
+    extra_dependencies: "subfig"
+header-includes:
+ - \usepackage{booktabs}
+ - \usepackage{longtable}
+ - \usepackage{array}
+ - \usepackage{multirow}
+ - \usepackage{wrapfig}
+ - \usepackage{float}
+ - \usepackage{subfig}
+ - \floatplacement{figure}{H}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(nlme)
+library(Matrix)
+library(MASS)
+library(rootSolve)
+library(geepack)
+library(lme4)
+library(mvtnorm)
+library(reshape2)
+library(knitr)
+library(ggplot2)
+library(tidyr)
+library(gridExtra)
+library(tidyverse)
+library(dplyr)
+library(kableExtra)
+library(corrplot)
+library(robustHD)
+library(pracma)
+library(xtable)
+library(latex2exp)
+library(janitor)
+library(ggpubr)
+# parallel computing libraries
+library(foreach)
+#library(doMC)
+# beep beep 
+library(beepr)
+library(doParallel)
+library(doSNOW)
+library(utils)
+library(foreach)
+library(doRNG)
+library(geepack)
+```
+
+```{r echo=FALSE}
+#rm(list = ls())
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, 
+                      warning = FALSE, results = "hide", 
+                      fig.pos = 'H', cache = FALSE, 
+                      eval = FALSE)
+# load functions
+source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
+```
+
+<!-- Functions -->
+```{r}
+# change font size, legend position
+myggfont <- function(legend_pos = NULL,
+                     legend_text_size = 18,
+                     legend_title_size = 20,
+                     axis_text_size = 16,
+                     axis_title_size = 20,
+                     plot_title_size = 20,
+                     facet_text_size = 16) {
+  ff <- theme(legend.text = element_text(size = legend_text_size),
+              legend.title = element_text(size = legend_title_size),
+              axis.text = element_text(size = axis_text_size),
+              axis.title = element_text(size = axis_title_size, face="bold"),
+              plot.title = element_text(size = plot_title_size),
+              strip.text.x = element_text(size = facet_text_size),
+              strip.text.y = element_text(size = facet_text_size))
+  if (is.null(legend_pos)) {
+    return(ff)
+  } else if (legend_pos == "top-left") {
+    return(ff + theme(legend.justification = c(0,1), legend.position = c(0,1)))
+  } else if (legend_pos == "top-right") {
+    return(ff + theme(legend.justification = c(1,1), legend.position = c(1,1)))
+  } else if (legend_pos == "bottom-left") {
+    return(ff + theme(legend.justification = c(0,0), legend.position = c(0,0)))
+  } else if (legend_pos == "bottom-right") {
+    return(ff + theme(legend.justification = c(1,0), legend.position = c(1,0)))
+  } else {
+    stop("legend_pos needs to be NULL, top-left, top-right, bottom-left, or bottom-right.")
+  }
+}
+
+```
+
+```{r}
+result6.1 <- readRDS("result_6_1_df_collected_nsim1000.RDS")
+result6.1$correct_SPNC <- "3. correct form"
+result6.3 <- readRDS("result_6_3_df_collected_nsim1000.RDS")
+result6.3$correct_SPNC <- "1. incorrect form and incorrect ASPN"
+result6.2 <- readRDS("result_6_2_df_collected_nsim1000.RDS")
+result6.2$correct_SPNC <- "2. incorrect form but correct ASPN"
+result <- rbind(result6.1, result6.3, result6.2)
+
+result <- result %>% filter(!(gt_t_shape != "constant" & gt_t_theta == 0))
+
+
+# result$ft_t_shape_and_theta <- paste0(result$ft_t_shape, result$ft_t_theta)
+# result$ASPNC_t_and_gt_shape_and_gt_t_theta <- paste0(result$ASPNC_t, result$gt_t_shape, result$gt_t_theta)
+# result$gt_shape_and_gt_t_theta <- paste0(result$gt_t_shape, result$gt_t_theta)
+# result$ATE_t_and_ASPNC_t <- paste0(result$ATE_t, result$ASPNC_t)
+
+# result$gt_shape_and_gt_t_theta[result$gt_shape_and_gt_t_theta == "linear_theta0"] <- "constant"
+
+# gt_t_shape_names <- list(
+#     'linear_theta'=TeX(r'($SPNC^*(t)$: linear)'),
+#     'quadratic_theta'=TeX(r'($SPNC^*(t)$: quadratic)')
+# )
+# gt_t_shape_labeller <- function(variable,value){
+#     return(gt_t_shape_names[value])
+# }
+
+result$gt_t_shape_theta <- paste0(result$gt_t_shape, "_", result$gt_t_theta)
+
+result %>% 
+    ggplot(aes(x = coef_SC, y = power_adj, color = correct_SPNC,
+               linetype = gt_t_shape_theta)) +
+    geom_line() +
+    # facet_grid(~ gt_t_shape, labeller = gt_t_shape_labeller) +
+    geom_hline(yintercept = 0.8, linetype = 2) +
+    scale_color_discrete(name = TeX(r'(Correctness of $SPNC^w(t)$ and $ASPN^w$)'),
+                            labels = c(TeX(r'($SPNC^w(t) \neq SPNC^*(t)$, $ASPN^w \neq ASPN^*$)'),
+                                       TeX(r'($SPNC^w(t) \neq SPNC^*(t)$, $ASPN^w = ASPN^*$)'),
+                                       TeX(r'($SPNC^w(t) = SPNC^*(t)$, $ASPN^w = ASPN^*$)'))) +
+    # scale_color_discrete(guide = "none") +
+    scale_linetype_discrete(name = TeX(r'(Pattern of $g^*(t)^T \alpha^*$)'),
+                         labels = c(TeX(r'(constant)'),
+                                    TeX(r'(linear, $\theta_g^* = -0.3$)'),
+                                    TeX(r'(linear, $\theta_g^* = 0.3$)'),
+                                    TeX(r'(quadratic, $\theta_g^* = -0.3$)'),
+                                    TeX(r'(quadratic, $\theta_g^* = 0.3$)'))) +
+    xlab(TeX(r'($\gamma_2^*$ (serial correlation))')) +
+    ylab("power") +
+    # ggtitle(TeX(r'($SPNC^w(t)$: constant)')) +
+    # coord_cartesian(ylim = c(0.5, 0.83), xlim = c(-1, 1)) +
+    # scale_y_continuous(breaks = seq(from = 0.1, to = 1, by = 0.1)) +
+    # scale_x_continuous(breaks = c(-1,0,1)) +
+    # facet_grid(gt_t_theta ~ ASPNC_t, labeller = label_both) +
+    theme_bw() + 
+    myggfont(legend_text_size = 14, legend_title_size = 16) +
+    theme(legend.text.align = 0, plot.title = element_text(hjust = 0.5))
+ggsave(paste0("figure 10 - power.pdf"), width = 9, height = 5)
+ggsave(paste0("figure 10 - power.jpg"), width = 9, height = 5)
+
+```
+
+
