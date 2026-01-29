@@ -1,0 +1,556 @@
+---
+title: "DrinkLess Data Analysis"
+author: "Jeremy Lin"
+date: "2024-04-18"
+output: 
+  pdf_document :
+    keep_tex: true
+    extra_dependencies: "subfig"
+header-includes:
+ - \usepackage{booktabs}
+ - \usepackage{longtable}
+ - \usepackage{array}
+ - \usepackage{multirow}
+ - \usepackage{wrapfig}
+ - \usepackage{float}
+ - \usepackage{subfig}
+ - \floatplacement{figure}{H}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(nlme)
+library(Matrix)
+library(MASS)
+library(rootSolve)
+library(geepack)
+library(lme4)
+library(mvtnorm)
+library(reshape2)
+library(knitr)
+library(ggplot2)
+library(tidyr)
+library(gridExtra)
+library(tidyverse)
+library(dplyr)
+library(kableExtra)
+library(corrplot)
+library(robustHD)
+library(pracma)
+library(xtable)
+library(latex2exp)
+library(janitor)
+library(ggpubr)
+library(lubridate)
+# parallel computing libraries
+library(foreach)
+#library(doMC)
+# beep beep 
+library(beepr)
+library(doParallel)
+library(doSNOW)
+library(utils)
+library(foreach)
+library(doRNG)
+library(geepack)
+```
+
+```{r echo=FALSE}
+#rm(list = ls())
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, 
+                      warning = FALSE, results = "hide", 
+                      fig.pos = 'H', cache = FALSE, 
+                      eval = TRUE)
+# load data set 
+source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/wcls_cat_trt_binary_outcome.R")
+source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions_util.R")
+
+
+```
+
+
+
+```{r, eval = FALSE}
+dta2 <- readRDS("FINAL Dataset_A.rds")
+table(dta2$treatment)
+# trt = 1 new notification, trt = 2 standard notification
+dta2 <- dta2 %>% mutate(treatment_cate = ifelse(subversion == "Y", 2, ifelse(subversion == "X", 1, 0)), decision_index = days_since_download, binary_outcome = primary_outcome) 
+
+dta <- dta2 %>% dplyr::select(ID, decision_index, age, AUDIT_score, gender, binary_outcome, treatment_cate)
+
+# Create Lag variable
+dta$binary_outcome.lag  <- c(0,head(dta$binary_outcome,-1))
+
+# shift decision point by 1 for intercept interpretability 
+dta$decision_index <- dta$decision_index +1
+
+# attach availability column for estimator purposes (set I =1 for all time point)
+dta$I <- 1
+
+# add probability treatment (required in our estimator)
+dta$prob_A <- sapply(dta$treatment_cate, function(l) ifelse(l == 0, 0.4, 
+                                    ifelse(l == 1, 0.3, 0.3)) )
+
+dta <- dta %>% mutate(AUDIT_hazardous = ifelse(AUDIT_score >= 8 & AUDIT_score <= 15, 1, 0))
+dta <- dta %>% mutate(AUDIT_harmful = ifelse(AUDIT_score >= 16 & AUDIT_score <= 19, 1, 0))
+dta <- dta %>% mutate(AUDIT_atRisk = ifelse(AUDIT_score >= 20 & AUDIT_score <= 40, 1, 0))
+
+# there is no missing data in this dataset
+summary(dta)
+
+# n_sample = 349  participants (paper said 42 so 5 drop during the study?)
+n_sample = length(unique(dta$ID))
+id <- unique(dta$ID)
+
+# create table for participant versus timepoints 
+na_vec <- rep(NA, n_sample)
+id_tbl <- data.frame(
+  id = na_vec,
+  n_timepoints = na_vec,
+  max_time = na_vec ,
+  time_complete = na_vec
+)
+
+for (i in 1:n_sample) {
+  id_tbl$id[i] <- id[i]
+  time_i <- dta[which(dta$ID == id[i]), "decision_index"]
+  id_tbl$n_timepoints[i] <- dim(time_i)[1] 
+  id_tbl$max_time[i] <- max(time_i$decision_index)
+  id_tbl$time_complete[i] <- id_tbl$n_timepoints[i] == (id_tbl$max_time[i])
+}
+
+id_tbl
+
+# all participants have full timpepoints
+which(id_tbl$time_complete == FALSE)
+
+dta <- as.data.frame(dta)
+
+saveRDS(dta, "DrinkLess_processed.RDS")
+
+```
+
+
+# Analysis
+
+```{r eval=TRUE}
+dta <- readRDS("DrinkLess_processed.RDS")
+# fitting our estimator 
+id_varname = c("ID")
+decision_time_varname = c("decision_index")
+treatment_varname = c("treatment_cate")
+
+avail_varname = c("I")
+rand_prob_varname = "prob_A"
+trt_level = 2
+
+moderator_varname <- c()
+outcome_varname = c("binary_outcome")
+control_varname <- c()
+
+# Fit marginal model with ft = 1 and gt = 1 , use beta to approximate ATE and alpha to approximate ASPNC
+fit1 <- wcls_categorical_treatment(
+  dta = dta,
+  id_varname = id_varname,
+  decision_time_varname = decision_time_varname,
+  treatment_varname = treatment_varname,
+  outcome_varname = outcome_varname,
+  control_varname = control_varname,
+  moderator_varname = moderator_varname,
+  rand_prob_varname = rand_prob_varname,
+  avail_varname = avail_varname,
+  trt_level = trt_level,
+  estimator_initial_value = NULL
+)
+
+#approximate ate1 
+exp(fit1$beta_hat[1])
+
+# approximate ate 2
+exp(fit1$beta_hat[2])
+
+# approximating aspnc using model, i.e aspnc = e^alpha_hat = 0.08
+exp(fit1$alpha_hat[1])
+
+# alpha hat converges to alpha + sum (beta_k * p_k)
+
+
+# E(Y) = 0.09, seems like the e^gt equal to E(Y) instead of 1/t sum E(Y|A = 0)
+mean(dta$binary_outcome)
+
+# approximating aspnc using data
+#calculate aspnc
+dta %>% dplyr::filter(treatment_cate == 0) %>% summarise(aspnc = mean(binary_outcome))
+
+spnc <- rep(NA, 30)
+for (i in 1:30) {
+  spnc[i] <- mean(dta$binary_outcome[which(dta$decision_index == (i+1) & dta$treatment_cate ==0)])
+}
+mean(spnc) # Take away: mean of condition sum is the same with sum of conditional mean = 0.03
+
+
+```
+
+
+```{r}
+# fitting our estimator 
+id_varname = c("ID")
+decision_time_varname = c("decision_index")
+treatment_varname = c("treatment_cate")
+
+avail_varname = c("I")
+rand_prob_varname = "prob_A"
+trt_level = 2
+
+outcome_varname = c("binary_outcome")
+control_varname <- c("age", "AUDIT_score", "gender","decision_index", "binary_outcome.lag")
+
+```
+
+
+```{r}
+moderator_varname <- c()
+
+fit1a <- wcls_categorical_treatment(
+  dta = dta,
+  id_varname = id_varname,
+  decision_time_varname = decision_time_varname,
+  treatment_varname = treatment_varname,
+  outcome_varname = outcome_varname,
+  control_varname = control_varname,
+  moderator_varname = moderator_varname,
+  rand_prob_varname = rand_prob_varname,
+  avail_varname = avail_varname,
+  trt_level = trt_level,
+  estimator_initial_value = NULL
+)
+
+```
+
+
+```{r}
+fit_1a_summary <- wcls_summary(fit1a)
+res1a <- data.frame(Estimate =fit1a$beta_hat,
+           Sd = fit1a$beta_se)
+res1a <- cbind(res1a, fit1a$conf_int_adjusted_t, p_val = fit_1a_summary$`Pr(>|t|)`)
+
+# # between treatment marginal
+L1a <- matrix(c(-1, 1), nrow = 1)
+diff1a <- wcls_glh(fit1a, L1a)
+
+resdiff1a <- cbind(estimator = diff1a$summary$Estimate, sd = diff1a$summary$`Std. Error`, 
+                     diff1a$conf_int, pval = diff1a$summary$`Pr(>|t|)`)
+resdiff1a <- rbind(resdiff1a, c(0, 0, 0, 0, diff1a$simultaneous_test))
+rownames(resdiff1a) <- c("trt:1  - trt:2" , "simultneous")
+
+# odds 
+exp(res1a)
+```
+
+
+
+```{r}
+# fit 1 b use time as moderator
+moderator_varname = c("decision_index")
+
+fit1b <- wcls_categorical_treatment(
+  dta = dta,
+  id_varname = id_varname,
+  decision_time_varname = decision_time_varname,
+  treatment_varname = treatment_varname,
+  outcome_varname = outcome_varname,
+  control_varname = control_varname,
+  moderator_varname = moderator_varname,
+  rand_prob_varname = rand_prob_varname,
+  avail_varname = avail_varname,
+  trt_level = trt_level,
+  estimator_initial_value = NULL
+)
+```
+
+```{r}
+fit_1b_summary <- wcls_summary(fit1b)
+res1b <- data.frame(Estimate =fit1b$beta_hat,
+           Sd = fit1b$beta_se)
+res1b <- cbind(res1b, fit1b$conf_int_adjusted_t, p_val = fit_1b_summary$`Pr(>|t|)`)
+
+L1b <- matrix(c(-1, 0, 1, 0, 0, -1, 0, 1), ncol = 4, byrow = TRUE)
+diff1b <- wcls_glh(fit1b, L1b)
+
+resdiff1b <- cbind(estimator = diff1b$summary$Estimate, sd = diff1b$summary$`Std. Error`, 
+                     diff1b$conf_int, pval = diff1b$summary$`Pr(>|t|)`)
+resdiff1b <- rbind(resdiff1b, c(0, 0, 0, 0, diff1b$simultaneous_test))
+rownames(resdiff1b) <- c("trt:1 trt:2 int","trt:1 trt:2 slp" ,"simultaneous")
+
+exp(res1b)
+```
+
+
+```{r}
+# fit 1c use location as moderator, this will not be used for analysis
+moderator_varname = c("AUDIT_score")
+
+fit1c <- wcls_categorical_treatment(
+  dta = dta,
+  id_varname = id_varname,
+  decision_time_varname = decision_time_varname,
+  treatment_varname = treatment_varname,
+  outcome_varname = outcome_varname,
+  control_varname = control_varname,
+  moderator_varname = moderator_varname,
+  rand_prob_varname = rand_prob_varname,
+  avail_varname = avail_varname,
+  trt_level = trt_level,
+  estimator_initial_value = NULL
+)
+
+fit_1c_summary <- wcls_summary(fit1c)
+
+res1c <- data.frame(Estimate =fit1c$beta_hat,
+           Sd = fit1c$beta_se)
+res1c <- cbind(res1c, fit1c$conf_int_adjusted_t, p_val = fit_1c_summary$`Pr(>|t|)`)
+
+```
+
+
+
+```{r}
+# model when using Audit as factor (using hazardous as baseline)
+moderator_varname = c("AUDIT_harmful","AUDIT_atRisk")
+control_varname <- c("age", "AUDIT_harmful","AUDIT_atRisk","gender","decision_index", "binary_outcome.lag")
+
+fit1d <- wcls_categorical_treatment(
+  dta = dta,
+  id_varname = id_varname,
+  decision_time_varname = decision_time_varname,
+  treatment_varname = treatment_varname,
+  outcome_varname = outcome_varname,
+  control_varname = control_varname,
+  moderator_varname = moderator_varname,
+  rand_prob_varname = rand_prob_varname,
+  avail_varname = avail_varname,
+  trt_level = trt_level,
+  estimator_initial_value = NULL
+)
+
+```
+
+
+
+```{r}
+fit_1d_summary <- wcls_summary(fit1d)
+res1d <- data.frame(Estimate =fit1d$beta_hat,
+           Sd = fit1d$beta_se )
+res1d <- cbind(res1d, fit1d$conf_int_adjusted_t, p_val = fit_1d_summary$`Pr(>|t|)`)
+
+```
+
+```{r}
+# initialize matrix storing info effect we want to test 
+diff_matrix_1d <- matrix(rep(NA, 42), ncol = 6)
+
+# initialize matrix result 
+AUDIT_result <- matrix(rep(NA, 35), ncol= 5) 
+rownames(AUDIT_result) <- c("trt:1 harmful", "trt:1 at risk", "trt:2 harmful", "trt:2 at risk", "trt:2 trt:1 hazardous", "trt:2 trt:1 harmful", "trt:2 trt:1 at risk")
+  
+# List of effect we want to compare
+# trt 1 audit score harmful
+diff_matrix_1d[1,] <- matrix(c(1, 1, 0, 0, 0, 0), ncol = 6, byrow = TRUE)
+# trt 1  audit score at risk 
+diff_matrix_1d[2,] <-  matrix(c(1, 0, 1, 0, 0, 0), ncol = 6, byrow = TRUE)
+# trt 2 audit score harmful
+diff_matrix_1d[3,] <-  matrix(c(0, 0, 0, 1, 1, 0), ncol = 6, byrow = TRUE)
+#trt 2 audit score at risk 
+diff_matrix_1d[4,] <-  matrix(c(0, 0, 0, 1, 0, 1), ncol = 6, byrow = TRUE)
+# trt:1 vs trt:2 hazardous
+diff_matrix_1d[5,] <-  matrix(c(-1, 0, 0, 1, 0, 0), ncol = 6, byrow = TRUE)
+# trt:2 vs trt:1  harmful
+diff_matrix_1d[6,] <-  matrix(c(-1, -1, 0, 1, 1, 0), ncol = 6, byrow = TRUE)
+# trt:2 vs trt:1 at risk
+diff_matrix_1d[7,] <-  matrix(c(-1, 0, -1, 1, 0, 1), ncol = 6, byrow = TRUE)
+
+# test each effect 
+for (effect in 1:7) {
+  effect_temp <- wcls_glh(fit1d, matrix(diff_matrix_1d[effect, ], ncol = 6))
+  AUDIT_result[effect, ] <- cbind(estimator = effect_temp$summary$Estimate, sd =effect_temp$summary$`Std. Error`, 
+                     effect_temp$conf_int, pval = effect_temp$summary$`Pr(>|t|)`)
+  }
+exp(res1d)
+exp(AUDIT_result)
+```
+
+
+
+
+## Marginal Model 
+
+Treatment = 1 means a message from a bank of newly constructed message; 2 if standard message, 0 if no treatment
+
+\begin{align}
+    e^{(\beta_1 (Intercept : trt = 1) + \beta_2 (Intercept : trt = 2) + g_t^T\alpha )}
+\end{align}
+
+### Treatment Effect 
+
+```{r results='asis'}
+print(
+kable(
+  res1a,
+  caption = "Intercept model no moderator",
+  digits = 3
+) %>%
+  add_header_above(c(
+    " " = 1,
+    "Effect" = 2,
+    "t adjusted" = 2,
+    "pval" = 1
+  ))
+)
+```
+
+
+```{r}
+exp(res1a$Estimate)
+```
+
+
+### Between Treatment effect
+
+Averaging over study days, The effect between delivering walking suggestion versus antisedentary suggestions is not significant. 
+
+```{r results='asis'}
+print(
+kable(
+  resdiff1a,
+  caption = "Intercept model no moderator",
+  digits = 5
+) %>%
+  add_header_above(c(
+    " " = 1,
+    "Effect" = 2,
+    "t adjusted" = 2,
+    " " = 1
+  ))
+)
+```
+
+
+## Decision point as moderator.  
+
+\begin{align*}
+      exp\{ &\beta_1 (Intercept : trt = 1) + \beta_2 (time :trt = 1) + \beta_3 (Intercept : trt = 2) + \beta_4 (time :trt = 2) + g_t^T\alpha\}
+\end{align*}
+
+### Treatment effect
+
+```{r results='asis'}
+print(
+kable(
+  res1b,
+  caption = "decision point as moderator",
+  digits = 5
+) %>%
+  add_header_above(c(
+    " " = 1,
+    "Effect" = 2,
+    "t adjusted" = 2,
+    "pval" = 1
+  ))
+)
+```
+
+
+### Between treatment effect
+
+```{r results='asis'}
+print(
+kable(
+  resdiff1b,
+  caption = "time moderator",
+  digits = 4
+) %>%
+add_header_above(c(
+    " " = 1,
+    "Effect" = 2,
+    "t adjusted" = 2,
+    " " = 1
+  ))
+)
+```
+
+## Audit score as moderator
+
+\begin{align*}
+      exp\{ &\beta_1 (Intercept : trt = 1) + \beta_2 (Audit score :trt = 1) + \\
+            &\beta_3 (Intercept : trt = 2) + \beta_4 (Audit score :trt = 2) + g_t^T\alpha \}
+\end{align*}
+
+### Treatment Effect
+
+```{r results='asis'}
+print(
+kable(
+  res1c,
+  caption = "Audit Score as moderator",
+  digits = 5
+) %>%
+  add_header_above(c(
+    " " = 1,
+    "Effect" = 2,
+    "t adjusted" = 2,
+    "pval" = 1
+  ))
+)
+```
+
+Neither new notification nor the new notification was significant. 
+
+### Between treatment effect
+
+## Audit Stratified (hazardous vs harmful vs at risk) as moderator 
+
+\begin{align*}
+    exp\{ &\beta_1 (Intercept : trt = 1) + \beta_2 (audit harmful : trt = 1) + \beta_3 (audit at risk : trt = 1)\\
+      &\beta_4 (Intercept : trt = 2) + \beta_5 (audit harmful : trt = 1) + \beta_6 (audit at risk : trt = 1) + g_t^T\alpha \}
+\end{align*}
+
+
+### Treatment effect
+
+```{r results='asis'}
+print(
+kable(
+  res1d,
+  caption = "Audit Score as moderator",
+  digits = 5
+) %>%
+  add_header_above(c(
+    " " = 1,
+    "Effect" = 2,
+    "t adjusted" = 2,
+    "pval" = 1
+  ))
+)
+```
+Neither new notification nor the standard notification was significant. 
+
+### Between treatment effect
+
+```{r results='asis'}
+print(
+kable(
+  AUDIT_result,
+  caption = "Audit Score as moderator",
+  digits = 5
+) %>%
+  add_header_above(c(
+    " " = 1,
+    "effect" = 2,
+    "t adjusted" = 2,
+    " " = 1
+  )) 
+)
+```
+

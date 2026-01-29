@@ -1,0 +1,150 @@
+---
+title: "Simulation 2"
+author: "Jeremy J Lin"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document :
+    keep_tex: true
+    extra_dependencies: "subfig"
+header-includes:
+ - \usepackage{booktabs}
+ - \usepackage{longtable}
+ - \usepackage{array}
+ - \usepackage{multirow}
+ - \usepackage{wrapfig}
+ - \usepackage{float}
+ - \usepackage{subfig}
+ - \floatplacement{figure}{H}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(nlme)
+library(Matrix)
+library(MASS)
+library(rootSolve)
+library(geepack)
+library(lme4)
+library(mvtnorm)
+library(reshape2)
+library(knitr)
+library(ggplot2)
+library(tidyr)
+library(gridExtra)
+library(tidyverse)
+library(dplyr)
+library(kableExtra)
+library(corrplot)
+library(robustHD)
+library(pracma)
+library(xtable)
+library(latex2exp)
+library(janitor)
+library(ggpubr)
+# parallel computing libraries
+library(foreach)
+#library(doMC)
+# beep beep 
+library(beepr)
+library(doParallel)
+library(doSNOW)
+library(utils)
+library(foreach)
+library(doRNG)
+library(geepack)
+```
+
+```{r echo=FALSE}
+#rm(list = ls())
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, 
+                      warning = FALSE, results = "hide", 
+                      fig.pos = 'H', cache = FALSE, 
+                      eval = FALSE)
+# load functions
+source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
+```
+
+<!-- Functions -->
+
+# Simulation Settings 
+
+
+```{r}
+# change font size, legend position
+myggfont <- function(legend_pos = NULL,
+                     legend_text_size = 18,
+                     legend_title_size = 20,
+                     axis_text_size = 22,
+                     axis_title_size = 26,
+                     plot_title_size = 20,
+                     facet_text_size = 16) {
+  ff <- theme(legend.text = element_text(size = legend_text_size),
+              legend.title = element_text(size = legend_title_size),
+              axis.text = element_text(size = axis_text_size),
+              axis.title = element_text(size = axis_title_size, face="bold"),
+              plot.title = element_text(size = plot_title_size),
+              strip.text.x = element_text(size = facet_text_size),
+              strip.text.y = element_text(size = facet_text_size))
+  if (is.null(legend_pos)) {
+    return(ff)
+  } else if (legend_pos == "top-left") {
+    return(ff + theme(legend.justification = c(0,1), legend.position = c(0,1)))
+  } else if (legend_pos == "top-right") {
+    return(ff + theme(legend.justification = c(1,1), legend.position = c(1,1)))
+  } else if (legend_pos == "bottom-left") {
+    return(ff + theme(legend.justification = c(0,0), legend.position = c(0,0)))
+  } else if (legend_pos == "bottom-right") {
+    return(ff + theme(legend.justification = c(1,0), legend.position = c(1,0)))
+  } else {
+    stop("legend_pos needs to be NULL, top-left, top-right, bottom-left, or bottom-right.")
+  }
+}
+```
+
+
+```{r}
+n_seed = 1
+
+SD = data.frame()
+for (isim in 1:n_seed) {
+  fileName = paste("results_sim_1_setting_",isim,"_",1000,".RDS",sep = "")
+  res <- readRDS(paste0(fileName))
+  print(length(res))
+  SD <- rbind(SD, res)
+}
+
+saveRDS(SD, "n_vs_gt.RDS")
+
+unique(paste0(SD$ft_t_shape, SD$ft_t_theta, SD$ft_t_theta2))
+```
+
+
+```{r}
+# 1. Make plots for n versus ATE------------------------------------------------
+    n_ATE <- readRDS("n_vs_gt.RDS")
+    
+    n_constant_spnc <- n_ATE$n[n_ATE$gt_t_shape == "constant"][1]
+    
+    # ggplot 
+    n_ATE %>% 
+    filter(gt_t_shape != "constant") %>% 
+    ggplot(aes(x = gt_t_theta, y = n, color = gt_t_shape)) +
+    geom_line() +
+    geom_hline(yintercept = n_constant_spnc, linetype = 2) + 
+    scale_color_manual(name = "", labels = c("linear g(t)", "quadratic g(t)"),
+                       values = c(4,7)) +
+    xlab(TeX(r'($\theta_{g}$)')) +
+    ylab("n (sample size)") +
+    coord_cartesian(ylim = c(350, 1100)) +
+    annotate("text", x = 0, y = n_constant_spnc + 1, 
+             label = paste0("constant MEE(t): n = ", n_constant_spnc), size = 5) +
+    scale_x_continuous(breaks = c(-0.9, -0.5, 0, 0.5, 0.9)) +
+    theme_bw() + 
+    myggfont() +
+    theme(legend.text.align = 0, plot.title = element_text(hjust = 0.5), legend.position = "top")
+    ggsave("size Drinkless n vs gt_shape.jpg", height = 6, width = 6)
+    ggsave("size Drinkless n vs gt_shape.pdf", height = 6, width = 6)
+```
+
