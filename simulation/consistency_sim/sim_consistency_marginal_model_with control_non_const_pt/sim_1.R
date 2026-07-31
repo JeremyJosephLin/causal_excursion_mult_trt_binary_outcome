@@ -1,0 +1,170 @@
+# This simulation is to check consistency of our estimator under control misspecification
+# Simulation for marginal model 
+# The different with the previous consistency_marginal is we set gt= St and include St as control in GEE
+# St is a moderator variable, here the f(H_t) is 1 (Z_t in the paper)
+
+rm(list = ls(all = TRUE))
+#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# call functions
+source("wcls_cat_trt_binary_outcome.R")
+source("dgm.R")
+
+# load library fpr GEE and Lmm
+library(geepack) #gee
+
+
+# grab factorial design
+SD <- expand.grid(sample_sizes = c(20, 30, 40, 50, 100),
+                  total_Ts = c(30))
+
+# get command parameters
+args <- commandArgs(trailingOnly = TRUE)
+isetting <- as.integer(args[1]) # settings
+nsim <- as.integer(args[2])
+nsetting <- as.integer(args[3])
+
+# # for debugging purposes isetting any value between 1-6(length of sample size), nsim = 10, nsetting = 4(equal to the number of total_T)
+# isetting = 1
+# nsim = 1
+# nsetting = dim(SD)[1]
+
+setting_start <- (isetting - 1)* nsetting + 1
+setting_end <- isetting * nsetting
+
+print(paste0("setting value ", isetting, " nsim ", nsim, " nsetting ", nsetting, " setting start ",setting_start, " setting end ",setting_end))
+
+library(rootSolve) # for solver function multiroot()
+
+
+# ------------------------- run simulations ------------------------------------ 
+
+control_vars <- c("S")
+moderator_vars <- c()
+avail_varname = "I"
+
+
+result_list_collected <- list()
+
+i = 1
+for (i in setting_start:setting_end) {
+  result <- list()
+  
+  start_time <- Sys.time()
+  current_time <- Sys.time()
+  print(Sys.time())
+  print(paste0(round(
+    difftime(current_time, start_time, units = "hours"), 2
+  ), " hours has lapsed."))
+  cat("i =", i, "/", nrow(SD), "\n")
+  
+  # for each variation of sample sizes and total T do n_sim number of simulation
+  total_T = SD[i, "total_Ts"]
+  sample_size = SD[i, "sample_sizes"]
+  
+  
+  print(Sys.time())
+  print(paste0("Sample size ", sample_size, " total T ", total_T))
+  
+  # changing the number of seed for every simulation
+  set.seed(i)
+  
+  for (i_sim in 1:nsim) {
+    # Generate data
+    dta <- dgm_1(
+      sample_size = sample_size,
+      total_T = total_T
+    )
+  
+  # use this pmatrix tilde if we want to set ptilde = pt
+   # pmatrix_tilde <- matrix(rep(c(0.2, 0.5, 0.3), 30), ncol = 3, byrow = TRUE)
+    # Fit TQ estimator
+    fit_wcls  <- wcls_categorical_treatment(
+        dta = dta,
+        id_varname = "userid",
+        decision_time_varname = "time",
+        treatment_varname = "A",
+        outcome_varname = "Y",
+        control_varname = control_vars,
+        moderator_varname = moderator_vars,
+        rand_prob_varname = "prob_A",
+        estimator_initial_value = NULL,
+        trt_level = 2,
+        pmatrix_tilde = NULL,
+        avail_varname = NULL
+      )
+      beta_hat_wcls = fit_wcls$beta_hat
+      beta_se_wcls = fit_wcls$beta_se
+      varcov_wcls = fit_wcls$varcov
+      beta_se_adjusted_wcls = fit_wcls$beta_se_adjusted
+      varcov_adjusted_wcls = fit_wcls$varcov_adjusted
+      ci_unadj_wcls = fit_wcls$conf_int
+      ci_adj_z_wcls = fit_wcls$conf_int_adjusted_z
+      ci_adj_t_wcls = fit_wcls$conf_int_adjusted_t
+      p_tilde = fit_wcls$p_tilde
+      
+      # fit dataset with GEE and Independent Variance covariance matrix
+      fit_GEE1  <- geeglm(Y ~ S+ A1 + A2, data = dta, id = userid,
+                                corstr = "ind",family = poisson(link = "log"))
+      
+      # use reRisk in stead of geeglm but it should be giving similar 
+
+     #fit_temp <- relRisk(Y ~ S + A1 + A2, data = dta, corstr = "indep", id = userid)
+      
+      fit_summary_GEE1 <- summary(fit_GEE1)
+      beta_hat_GEE1 = fit_summary_GEE1$coefficients[c("A1", "A2"), "Estimate"]
+      beta_se_GEE1 = fit_summary_GEE1$coefficients[c("A1", "A2"), "Std.err"]
+      varcov_GEE1 = fit_summary_GEE1$cov.scaled[2:3, 2:3]
+      ci_lower_GEE1 <- beta_hat_GEE1 - 1.96 * beta_se_GEE1
+      ci_upper_GEE1 <- beta_hat_GEE1 + 1.96 * beta_se_GEE1
+      ci_GEE1 = cbind(ci_lower_GEE1, ci_upper_GEE1)
+
+    # fit dataset with GEE and Exchangeable Variance covariance matrix
+    fit_GEE2  <- geeglm(Y ~ S + A1 + A2, data = dta, id = userid,
+                   corstr = "exch", family = poisson(link = "log"))
+    
+    fit_summary_GEE2 <- summary(fit_GEE2)
+    beta_hat_GEE2 = fit_summary_GEE2$coefficients[c("A1", "A2"), "Estimate"]
+    beta_se_GEE2 = fit_summary_GEE2$coefficients[c("A1", "A2"), "Std.err"]
+    varcov_GEE2 = fit_summary_GEE2$cov.scaled[2:3, 2:3]
+    ci_lower_GEE2 <- beta_hat_GEE2 - 1.96 * beta_se_GEE2
+    ci_upper_GEE2 <- beta_hat_GEE2 + 1.96 * beta_se_GEE2
+    ci_GEE2 = cbind(ci_lower_GEE2, ci_upper_GEE2)
+
+    
+    output <- list(
+      list(
+        beta_hat_wcls = beta_hat_wcls,
+        beta_se_wcls = beta_se_wcls,
+        varcov_wcls = varcov_wcls,
+        beta_se_adjusted_wcls = beta_se_adjusted_wcls,
+        varcov_adjusted_wcls = varcov_adjusted_wcls,
+        ci_unadj_wcls = ci_unadj_wcls,
+        ci_adj_z = ci_adj_z_wcls,
+        ci_adj_t = ci_adj_t_wcls,
+        p_tilde = p_tilde,
+        beta_hat_GEE1 = beta_hat_GEE1, 
+        beta_se_GEE1 = beta_se_GEE1, 
+        varcov_GEE1 = varcov_GEE1, 
+        ci_GEE1 = ci_GEE1, 
+        beta_hat_GEE2 = beta_hat_GEE2, 
+        beta_se_GEE2 = beta_se_GEE2, 
+        varcov_GEE2 = varcov_GEE2, 
+        ci_GEE2 = ci_GEE2 
+      )
+    )
+    result <- c(result,output)
+  }
+      
+    # update result list
+    result_list_collected <- c(result_list_collected, list(
+      list(
+      sample_size = sample_size,
+      total_T = total_T,
+      result = result
+    )
+  ))
+  
+}
+
+outName <- paste("results_consistency_sim_setting_",isetting,"_",nsim,".RDS",sep = "")
+saveRDS(result_list_collected,file=outName)
