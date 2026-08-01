@@ -5,9 +5,12 @@
 #
 # Fits, for the marginal model (a) and the AUDIT-moderated model (c):
 #   EMEE  the estimator of the paper, with the small-sample adjusted standard error;
-#   GEE1  Poisson log link, working independence, robust standard errors
-#         (the longitudinal form of Zou's modified Poisson regression);
-#   GEE2  Poisson log link, exchangeable working correlation, robust standard errors.
+#   GEE-ind   Poisson log link, working independence, robust standard errors
+#             (the longitudinal form of Zou's modified Poisson regression);
+#   GEE-exch  Poisson log link, exchangeable working correlation, robust standard errors.
+# The labels name the working correlation structure rather than numbering the fits:
+# GEE1 and GEE2 are taken in the GEE literature, where they mean first- and second-order
+# estimating equations, and both fits here are first-order.
 # The GEE mean models carry the same covariates as the EMEE nuisance model g_t plus
 # treatment indicators (and, for model (c), treatment-by-AUDIT interactions).
 #
@@ -117,7 +120,7 @@ form_a <- binary_outcome ~ A1 + A2 + decision_index + age + gender +
   employment_1 + employment_2 + AUDIT_score + binary_outcome.lag
 for (cs in c("independence", "exchangeable")) {
   g <- fit_gee(form_a, cs, c("A1", "A2"))
-  out_a[[if (cs == "independence") "GEE1" else "GEE2"]] <- lincom(g$est, g$vcov, La, lab_a)
+  out_a[[if (cs == "independence") "GEE-ind" else "GEE-exch"]] <- lincom(g$est, g$vcov, La, lab_a)
 }
 
 for (m in names(out_a)) {
@@ -126,9 +129,9 @@ for (m in names(out_a)) {
 }
 
 cat("GEE minus EMEE (log scale):\n")
-print(round(data.frame(GEE1 = out_a$GEE1$Estimate - out_a$EMEE$Estimate,
-                       GEE2 = out_a$GEE2$Estimate - out_a$EMEE$Estimate,
-                       row.names = lab_a), 5))
+print(round(data.frame(`GEE-ind`  = out_a[["GEE-ind"]]$Estimate  - out_a$EMEE$Estimate,
+                       `GEE-exch` = out_a[["GEE-exch"]]$Estimate - out_a$EMEE$Estimate,
+                       row.names = lab_a, check.names = FALSE), 5))
 
 ## ==================================================== MODEL (c): AUDIT-moderated CEE
 cat("\n\n================ MODEL (c): CEE moderated by AUDIT category ================\n\n")
@@ -151,7 +154,7 @@ gee_terms_c <- c("A1", "A1:AUDIT_harmful", "A1:AUDIT_atRisk",
                  "A2", "A2:AUDIT_harmful", "A2:AUDIT_atRisk")
 for (cs in c("independence", "exchangeable")) {
   g <- fit_gee(form_c, cs, gee_terms_c)
-  out_c[[if (cs == "independence") "GEE1" else "GEE2"]] <- lincom(g$est, g$vcov, Lc, lab_c)
+  out_c[[if (cs == "independence") "GEE-ind" else "GEE-exch"]] <- lincom(g$est, g$vcov, Lc, lab_c)
 }
 
 for (m in names(out_c)) {
@@ -160,9 +163,9 @@ for (m in names(out_c)) {
 }
 
 cat("GEE minus EMEE (log scale):\n")
-print(round(data.frame(GEE1 = out_c$GEE1$Estimate - out_c$EMEE$Estimate,
-                       GEE2 = out_c$GEE2$Estimate - out_c$EMEE$Estimate,
-                       row.names = lab_c), 5))
+print(round(data.frame(`GEE-ind`  = out_c[["GEE-ind"]]$Estimate  - out_c$EMEE$Estimate,
+                       `GEE-exch` = out_c[["GEE-exch"]]$Estimate - out_c$EMEE$Estimate,
+                       row.names = lab_c, check.names = FALSE), 5))
 
 ## ==================================================== the Appendix C equivalence claim
 cat("\n\n================ equivalence check: f_t = g_t = 1, J_t = 1 ================\n\n")
@@ -177,10 +180,11 @@ ybar <- tapply(dta$binary_outcome, dta$treatment_cate, mean)
 cmp <- data.frame(
   row.names = c("beta_1", "beta_2"),
   EMEE = as.vector(emee_plain$beta_hat),
-  GEE1 = as.vector(coef(gee_plain)[c("A1", "A2")]),
-  log_ratio_of_arm_means = as.vector(log(ybar[c("1", "2")] / ybar["0"])))
+  `GEE-ind` = as.vector(coef(gee_plain)[c("A1", "A2")]),
+  log_ratio_of_arm_means = as.vector(log(ybar[c("1", "2")] / ybar["0"])),
+  check.names = FALSE)
 print(round(cmp, 10))
-cat("\nmax absolute difference:", max(abs(cmp$EMEE - cmp$GEE1)),
+cat("\nmax absolute difference:", max(abs(cmp$EMEE - cmp[["GEE-ind"]])),
     max(abs(cmp$EMEE - cmp$log_ratio_of_arm_means)), "\n")
 cat("arm-wise means of Y:", sprintf("%.6f", ybar), "\n")
 
