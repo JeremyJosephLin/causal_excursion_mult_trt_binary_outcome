@@ -7,8 +7,12 @@
 #   EMEE  the estimator of the paper, with the small-sample adjusted standard error;
 #   GEE-ind   Poisson log link, working independence, robust standard errors
 #             (the longitudinal form of Zou's modified Poisson regression);
-#   GEE-exch  Poisson log link, exchangeable working correlation, robust standard errors.
-# The labels name the working correlation structure rather than numbering the fits:
+#   GEE-exch  Poisson log link, exchangeable working correlation, robust standard errors;
+#   GLMM      Poisson log link with a participant random intercept, model-based standard
+#             errors. Its treatment coefficients are comparable with the others because a
+#             random intercept factors out under a log link: E(Y | X, b) = exp(x'beta + b)
+#             gives E(Y | X) = exp(x'beta) E(e^b), so contrasts of x'beta are unchanged.
+# The GEE labels name the working correlation structure rather than numbering the fits:
 # GEE1 and GEE2 are taken in the GEE literature, where they mean first- and second-order
 # estimating equations, and both fits here are first-order.
 # The GEE mean models carry the same covariates as the EMEE nuisance model g_t plus
@@ -33,6 +37,7 @@ REPO <- "~/repos/cat_trt_binary"
 suppressPackageStartupMessages({
   library(dplyr)
   library(geepack)
+  library(lme4)
 })
 source(file.path(REPO, "functions/wcls_cat_trt_binary_outcome.R"))
 source(file.path(REPO, "functions/functions_util.R"))
@@ -95,6 +100,22 @@ lincom <- function(est, vcov, L, labels) {
              p = 2 * pnorm(abs(e / s), lower.tail = FALSE))
 }
 
+## GLMM fit returning the treatment-related coefficients and their covariance.
+## bobyqa is needed: the default optimizer stops with a max|grad| warning on these data.
+fit_glmm <- function(formula, terms_wanted) {
+  m <- glmer(formula, data = dta, family = poisson(link = "log"),
+             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e5)))
+  msgs <- m@optinfo$conv$lme4$messages
+  if (length(msgs)) warning("glmer: ", paste(msgs, collapse = "; "))
+  b <- fixef(m); V <- as.matrix(vcov(m))
+  nm <- vapply(terms_wanted, function(tm) {
+    if (tm %in% names(b)) tm else paste(rev(strsplit(tm, ":")[[1]]), collapse = ":")
+  }, character(1))
+  stopifnot(all(nm %in% names(b)))
+  list(est = b[nm], vcov = V[nm, nm, drop = FALSE],
+       re_sd = as.data.frame(VarCorr(m))$sdcor, fit = m)
+}
+
 ## GEE fit returning the treatment-related coefficients and their robust covariance
 fit_gee <- function(formula, corstr, terms_wanted) {
   f <- geeglm(formula, data = dta, id = idnum, corstr = corstr, family = poisson(link = "log"))
@@ -122,15 +143,19 @@ for (cs in c("independence", "exchangeable")) {
   g <- fit_gee(form_a, cs, c("A1", "A2"))
   out_a[[if (cs == "independence") "GEE-ind" else "GEE-exch"]] <- lincom(g$est, g$vcov, La, lab_a)
 }
+m <- fit_glmm(update(form_a, . ~ . + (1 | ID)), c("A1", "A2"))
+out_a[["GLMM"]] <- lincom(m$est, m$vcov, La, lab_a)
+cat("GLMM model (a): participant random intercept SD =", round(m$re_sd, 4), "\n\n")
 
 for (m in names(out_a)) {
   cat("---", m, "---\n"); print(round(out_a[[m]], 5))
   cat("ratio scale:", sprintf("%.3f", exp(out_a[[m]]$Estimate)), "\n\n")
 }
 
-cat("GEE minus EMEE (log scale):\n")
+cat("Comparator minus EMEE (log scale):\n")
 print(round(data.frame(`GEE-ind`  = out_a[["GEE-ind"]]$Estimate  - out_a$EMEE$Estimate,
                        `GEE-exch` = out_a[["GEE-exch"]]$Estimate - out_a$EMEE$Estimate,
+                       GLMM       = out_a$GLMM$Estimate          - out_a$EMEE$Estimate,
                        row.names = lab_a, check.names = FALSE), 5))
 
 ## ==================================================== MODEL (c): AUDIT-moderated CEE
@@ -156,15 +181,19 @@ for (cs in c("independence", "exchangeable")) {
   g <- fit_gee(form_c, cs, gee_terms_c)
   out_c[[if (cs == "independence") "GEE-ind" else "GEE-exch"]] <- lincom(g$est, g$vcov, Lc, lab_c)
 }
+m <- fit_glmm(update(form_c, . ~ . + (1 | ID)), gee_terms_c)
+out_c[["GLMM"]] <- lincom(m$est, m$vcov, Lc, lab_c)
+cat("GLMM model (c): participant random intercept SD =", round(m$re_sd, 4), "\n\n")
 
 for (m in names(out_c)) {
   cat("---", m, "---\n"); print(round(out_c[[m]], 5))
   cat("ratio scale:", sprintf("%.3f", exp(out_c[[m]]$Estimate)), "\n\n")
 }
 
-cat("GEE minus EMEE (log scale):\n")
+cat("Comparator minus EMEE (log scale):\n")
 print(round(data.frame(`GEE-ind`  = out_c[["GEE-ind"]]$Estimate  - out_c$EMEE$Estimate,
                        `GEE-exch` = out_c[["GEE-exch"]]$Estimate - out_c$EMEE$Estimate,
+                       GLMM       = out_c$GLMM$Estimate          - out_c$EMEE$Estimate,
                        row.names = lab_c, check.names = FALSE), 5))
 
 ## ==================================================== the Appendix C equivalence claim
@@ -196,4 +225,5 @@ cat("exp():", sprintf("%.4f", exp(emee_default_ptilde$beta_hat)),
 
 cat("\n=== sessionInfo ===\n")
 cat(R.version.string, "| geepack", as.character(packageVersion("geepack")),
+    "| lme4", as.character(packageVersion("lme4")),
     "| dplyr", as.character(packageVersion("dplyr")), "\n")
