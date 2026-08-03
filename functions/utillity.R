@@ -66,9 +66,13 @@ construct_taut_theta <- function(m, AvgTau, shape, theta = 0) {
 
 
 construct_pt <- function(m, shape) {
-  match.arg(shape, c("constant equal pk", "constant p1 high", "constant p2 high"))
+  match.arg(shape, c("constant equal pk", "constant p0 high", "constant p1 high",
+                     "constant p2 high"))
   if (shape == "constant equal pk") {
     return(matrix(rep(c(1/3, 1/3, 1/3),times = m ), ncol = 3, byrow = TRUE))
+  } else if (shape == "constant p0 high") {
+    # the Drink Less randomization: no notification 0.4, each active option 0.3
+    return(matrix(rep(c(0.4, 0.3, 0.3),times = m ), ncol = 3, byrow = TRUE))
   } else if (shape == "constant p1 high") {
     return(matrix(rep(c(0.3, 0.4, 0.3),times = m ), ncol = 3, byrow = TRUE))
   } else if (shape == "constant p2 high") {

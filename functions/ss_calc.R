@@ -26,7 +26,7 @@ compute_sigma <- function(f_t,
                           p_t, 
                           tau
 ) {
-  nA <- dim(pt)[2] # include ctr 
+  nA <- dim(p_t)[2] # include ctr 
   p <- length(beta)
   ## The M and Sigma matrices (needed to compute lambda)
   M_matrix <- Sigma_matrix <- matrix(data=0, nrow=p, ncol=p) 
@@ -153,7 +153,7 @@ mrt_mult_trt_ss <- function(f_t,
                             tau = rep(1,dim(f_t)[1]), 
                             exact = FALSE
 ){
-  nA <- dim(pt)[2]
+  nA <- dim(p_t)[2]
   t <- dim(f_t)[1]
   
   # degree of freedom of L*beta
