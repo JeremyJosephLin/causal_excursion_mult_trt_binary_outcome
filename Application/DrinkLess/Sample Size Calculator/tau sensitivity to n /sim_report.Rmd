@@ -53,25 +53,20 @@ library(utils)
 library(foreach)
 library(doRNG)
 library(geepack)
+library(here)
 ```
 
 ```{r echo=FALSE}
-#rm(list = ls())
-
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, 
                       warning = FALSE, results = "hide", 
                       fig.pos = 'H', cache = FALSE, 
                       eval = FALSE)
-# load functions
-source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 ```
 
 <!-- Functions -->
 
-# Simulation Settings 
 
-
-```{r}
+```{r, eval=TRUE}
 # change font size, legend position
 myggfont <- function(legend_pos = NULL,
                      legend_text_size = 18,
@@ -105,6 +100,7 @@ myggfont <- function(legend_pos = NULL,
 
 
 ```{r}
+# only run this chunk if we want to read a new simulation result from HPC
 n_seed = 1
 
 SD = data.frame()
@@ -121,9 +117,9 @@ unique(paste0(SD$ft_t_shape, SD$ft_t_theta, SD$ft_t_theta2))
 ```
 
 
-```{r}
+```{r, eval=TRUE}
 # 1. Make plots for n versus ATE------------------------------------------------
-    n_ATE <- readRDS("n_vs_tau.RDS")         
+    n_ATE <- readRDS(here("dataset", "n_vs_tau.RDS") )        
     
    n_ATE$ft_t_shape_and_ft_t_theta <- paste0(n_ATE$ft_t_shape, n_ATE$ft_t_theta,n_ATE$ft_t_theta2)
   unique(n_ATE$ft_t_shape_and_ft_t_theta)
