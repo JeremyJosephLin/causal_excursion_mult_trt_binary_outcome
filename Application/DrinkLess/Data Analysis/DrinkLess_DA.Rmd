@@ -70,7 +70,6 @@ source(here("functions", "functions_util.R"))
 ```
 
 
-
 ```{r, eval = FALSE}
 dta2 <- readRDS("FINAL Dataset_A.rds")
 table(dta2$treatment)
@@ -131,11 +130,10 @@ saveRDS(dta, "DrinkLess_processed.RDS")
 
 ```
 
-
 # Analysis
 
 ```{r eval=TRUE}
-dta <- readRDS("DrinkLess_processed.RDS")
+dta <- readRDS(here("dataset","DrinkLess_processed.RDS"))
 # fitting our estimator 
 id_varname = c("ID")
 decision_time_varname = c("decision_index")
@@ -552,4 +550,5 @@ kable(
   )) 
 )
 ```
+
 
