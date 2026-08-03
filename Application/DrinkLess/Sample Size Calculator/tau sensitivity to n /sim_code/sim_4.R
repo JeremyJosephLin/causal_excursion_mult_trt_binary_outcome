@@ -1,5 +1,4 @@
 # This code to fill in SD using sample size calculator no need to run it in HPC since setting is pretty small
-# run build_factorial_design.R first before running 
 rm(list = ls())
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("wcls_cat_trt_binary_outcome.R")
@@ -10,12 +9,13 @@ library(rootSolve)
 SD <- readRDS("factorial_design.RDS")
 
 ##### fill the SD #####
-# get command parameters to run in HPC cluser
-# args <- commandArgs(trailingOnly = TRUE)
-# isetting <- as.integer(args[1]) # settings 
-# nsim <- as.integer(args[2])
-# nsetting <- as.integer(args[3])
+# get command parameters
+args <- commandArgs(trailingOnly = TRUE)
+isetting <- as.integer(args[1]) # settings 
+nsim <- as.integer(args[2])
+nsetting <- as.integer(args[3])
 
+# for debugging purposes isetting any value between 1-6(length of sample size), nsim = 10, nsetting = 4(equal to the number of total_T)
 isetting = 1
 nsim = 1
 nsetting = 732
