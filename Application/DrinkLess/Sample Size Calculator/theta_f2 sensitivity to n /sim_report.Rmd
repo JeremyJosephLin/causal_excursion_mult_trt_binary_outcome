@@ -53,17 +53,14 @@ library(utils)
 library(foreach)
 library(doRNG)
 library(geepack)
+library(here)
 ```
 
 ```{r echo=FALSE}
-#rm(list = ls())
-
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, 
                       warning = FALSE, results = "hide", 
                       fig.pos = 'H', cache = FALSE, 
                       eval = FALSE)
-# load functions
-source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 ```
 
 <!-- Functions -->
@@ -71,7 +68,7 @@ source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 # Simulation Settings 
 
 
-```{r}
+```{r, eval=TRUE}
 # change font size, legend position
 myggfont <- function(legend_pos = NULL,
                      legend_text_size = 12,
@@ -105,6 +102,7 @@ myggfont <- function(legend_pos = NULL,
 
 
 ```{r, eval=FALSE}
+# only run this chunk to read new result from HPC
 n_seed = 1
 
 SD = data.frame()
@@ -121,9 +119,9 @@ unique(paste0(SD$ft_t_shape, SD$ft_t_theta, SD$ft_t_theta2))
 ```
 
 
-```{r}
+```{r, eval=TRUE}
 # 1. Make plots for n versus ATE------------------------------------------------
-    n_ATE <- readRDS("n_vs_mee_pattern.RDS")
+    n_ATE <- readRDS(here("dataset", "n_vs_mee_pattern.RDS"))
     
    n_ATE$ft_t_shape_and_ft_t_theta <- paste0(n_ATE$ft_t_shape, n_ATE$ft_t_theta)
   unique(n_ATE$ft_t_shape_and_ft_t_theta)
@@ -155,9 +153,5 @@ unique(paste0(SD$ft_t_shape, SD$ft_t_theta, SD$ft_t_theta2))
     #theme(legend.text.align = 0, plot.title = element_text(hjust = 0.5)) 
     ggsave("size Drinkless n vs ft2_shape.jpg", height = 6, width = 6)
     ggsave("size Drinkless n vs ft2_shape.pdf", height = 6, width = 6)
-```
-
-```{r}
-n_ATE %>% filter(ft_t_shape_and_ft_t_theta == "constant0")
 ```
 
