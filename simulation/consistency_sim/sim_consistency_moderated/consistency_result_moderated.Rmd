@@ -1,5 +1,5 @@
 ---
-title: "Simulation 1"
+title: "Simulation"
 author: "Jeremy J Lin"
 date: "`r Sys.Date()`"
 output: 
@@ -53,6 +53,7 @@ library(utils)
 library(foreach)
 library(doRNG)
 library(geepack)
+library(here)
 ```
 
 ```{r echo=FALSE}
@@ -87,7 +88,7 @@ saveRDS(result_list, "result_list.RDS")
 
 ```
 
-```{r}
+```{r, eval=FALSE}
 result_list <- readRDS("result_list.RDS")
 nsim = 1000
 na_vec <- rep(NA, length(result_list))
@@ -284,13 +285,13 @@ for(j in 1:length(result_list)) {
   coef_est[j, c("beta_1_ci_ub_GEE2", "beta_2_ci_ub_GEE2", "beta_3_ci_ub_GEE2", "beta_4_ci_ub_GEE2")] <- rowMeans(ci_ub_GEE2, na.rm = TRUE)
 }
 
-saveRDS(coef_est, "coef_est.RDS")
+saveRDS(coef_est, "consistency_sim_moderated.RDS")
 ```
 
 
 
-```{r}
-coef_est <- readRDS("coef_est.RDS") %>% dplyr::select(sample_size, starts_with("bias"), starts_with("SE"), starts_with("cp"), starts_with("RMSE"))
+```{r, eval=TRUE}
+coef_est <- readRDS(here("dataset", "consistency_sim_moderated.RDS")) %>% dplyr::select(sample_size, starts_with("bias"), starts_with("SE"), starts_with("cp"), starts_with("RMSE"))
 
 df_long <- coef_est %>%
   pivot_longer(
