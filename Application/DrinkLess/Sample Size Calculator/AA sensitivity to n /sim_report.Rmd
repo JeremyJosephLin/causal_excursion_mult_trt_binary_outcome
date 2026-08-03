@@ -62,8 +62,6 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE,
                       warning = FALSE, results = "hide", 
                       fig.pos = 'H', cache = FALSE, 
                       eval = FALSE)
-# load functions
-source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 ```
 
 <!-- Functions -->

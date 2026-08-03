@@ -54,6 +54,7 @@ library(utils)
 library(foreach)
 library(doRNG)
 library(geepack)
+library(here)
 ```
 
 ```{r echo=FALSE}
@@ -64,10 +65,8 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE,
                       fig.pos = 'H', cache = FALSE, 
                       eval = TRUE)
 # load data set 
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/wcls_cat_trt_binary_outcome.R")
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions_util.R")
-
-
+source(here("functions", "wcls_cat_trt_binary_outcome.R"))
+source(here("functions", "functions_util.R"))
 ```
 
 
