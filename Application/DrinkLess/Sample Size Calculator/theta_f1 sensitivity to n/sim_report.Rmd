@@ -1,5 +1,5 @@
 ---
-title: "Simulation 2"
+title: "Simulation"
 author: "Jeremy J Lin"
 date: "`r Sys.Date()`"
 output: 
@@ -53,17 +53,14 @@ library(utils)
 library(foreach)
 library(doRNG)
 library(geepack)
+library(here)
 ```
 
 ```{r echo=FALSE}
-#rm(list = ls())
-
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, 
                       warning = FALSE, results = "hide", 
                       fig.pos = 'H', cache = FALSE, 
                       eval = FALSE)
-# load functions
-source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 ```
 
 <!-- Functions -->
@@ -71,7 +68,7 @@ source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 # Simulation Settings 
 
 
-```{r}
+```{r, eval=TRUE}
 # change font size, legend position
 myggfont <- function(legend_pos = NULL,
                      legend_text_size = 18,
@@ -105,6 +102,7 @@ myggfont <- function(legend_pos = NULL,
 
 
 ```{r}
+# only run this chink if we rerun HPC simulation and want to read new_result
 n_seed = 15
 
 SD = data.frame()
@@ -121,9 +119,9 @@ unique(paste0(SD$ft_t_shape, SD$ft_t_theta, SD$ft_t_theta2))
 ```
 
 
-```{r}
+```{r, eval=TRUE}
 # 1. Make plots for n versus ATE------------------------------------------------
-    n_ATE <- readRDS("n_vs_ft_1.RDS")
+    n_ATE <- readRDS(here("dataset", "n_vs_ft_1.RDS"))
     
     n_constant_MEE_SPNC <- n_ATE$n[n_ATE$ft_t_shape == "constant" & n_ATE$gt_t_shape == "constant"][1]
     n_constant_MEE <- n_ATE$n[n_ATE$ft_t_shape == "constant" & n_ATE$gt_t_theta == 0.2]
@@ -156,5 +154,4 @@ unique(paste0(SD$ft_t_shape, SD$ft_t_theta, SD$ft_t_theta2))
     ggsave("size Drinkless n vs ft1_shape.jpg", height = 6, width = 8)
     ggsave("size Drinkless n vs ft1_shape.pdf", height = 6, width = 8)
     
-# not the graph looks slightly different from the one in overleaf because gt_t_shape in the previous simulation is quadratic_theta
 ```
