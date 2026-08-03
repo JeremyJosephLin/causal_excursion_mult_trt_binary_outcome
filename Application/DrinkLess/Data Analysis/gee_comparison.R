@@ -158,6 +158,44 @@ print(round(data.frame(`GEE-ind`  = out_a[["GEE-ind"]]$Estimate  - out_a$EMEE$Es
                        GLMM       = out_a$GLMM$Estimate          - out_a$EMEE$Estimate,
                        row.names = lab_a, check.names = FALSE), 5))
 
+## ============================================ MODEL (b): CEE moderated by decision point
+## This is the analysis whose mean model is NOT saturated in the moderator: the decision
+## point index enters linearly rather than as indicators. The saturation argument of
+## Appendix C therefore does not cover it, and the two approaches need not coincide.
+cat("\n\n================ MODEL (b): CEE moderated by the decision point index ================\n\n")
+
+emee_b <- fit_emee(moderator = "decision_index", control = CONTROL)
+## EMEE coefficient order: (intercept, slope) for trt 1, then for trt 2
+Lb <- rbind(c( 1, 0,  0, 0), c( 0, 1,  0, 0),
+            c( 0, 0,  1, 0), c( 0, 0,  0, 1),
+            c(-1, 0,  1, 0), c( 0,-1,  0, 1))
+lab_b <- c("trt1 intercept", "trt1 slope", "trt2 intercept", "trt2 slope",
+           "trt2-trt1 intercept", "trt2-trt1 slope")
+nbb <- names(emee_b$beta_hat)
+out_b <- list(EMEE = lincom(emee_b$beta_hat, emee_b$varcov_adjusted[nbb, nbb], Lb, lab_b))
+
+form_b <- binary_outcome ~ (A1 + A2) * decision_index + age + gender +
+  employment_1 + employment_2 + AUDIT_score + binary_outcome.lag
+gee_terms_b <- c("A1", "A1:decision_index", "A2", "A2:decision_index")
+for (cs in c("independence", "exchangeable")) {
+  g <- fit_gee(form_b, cs, gee_terms_b)
+  out_b[[if (cs == "independence") "GEE-ind" else "GEE-exch"]] <- lincom(g$est, g$vcov, Lb, lab_b)
+}
+m <- fit_glmm(update(form_b, . ~ . + (1 | ID)), gee_terms_b)
+out_b[["GLMM"]] <- lincom(m$est, m$vcov, Lb, lab_b)
+cat("GLMM model (b): participant random intercept SD =", round(m$re_sd, 4), "\n\n")
+
+for (m in names(out_b)) {
+  cat("---", m, "---\n"); print(round(out_b[[m]], 5))
+  cat("ratio scale:", sprintf("%.3f", exp(out_b[[m]]$Estimate)), "\n\n")
+}
+
+cat("Comparator minus EMEE (log scale):\n")
+print(round(data.frame(`GEE-ind`  = out_b[["GEE-ind"]]$Estimate  - out_b$EMEE$Estimate,
+                       `GEE-exch` = out_b[["GEE-exch"]]$Estimate - out_b$EMEE$Estimate,
+                       GLMM       = out_b$GLMM$Estimate          - out_b$EMEE$Estimate,
+                       row.names = lab_b, check.names = FALSE), 5))
+
 ## ==================================================== MODEL (c): AUDIT-moderated CEE
 cat("\n\n================ MODEL (c): CEE moderated by AUDIT category ================\n\n")
 
