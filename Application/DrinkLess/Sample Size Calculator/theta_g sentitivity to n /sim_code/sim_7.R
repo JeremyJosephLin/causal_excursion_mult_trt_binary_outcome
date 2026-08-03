@@ -9,16 +9,16 @@ library(rootSolve)
 SD <- readRDS("factorial_design.RDS")
 
 ##### fill the SD #####
-# get command parameters only used to run through HPC cluster
-# args <- commandArgs(trailingOnly = TRUE)
-# isetting <- as.integer(args[1]) # settings 
-# nsim <- as.integer(args[2])
-# nsetting <- as.integer(args[3])
+# get command parameters
+args <- commandArgs(trailingOnly = TRUE)
+isetting <- as.integer(args[1]) # settings 
+nsim <- as.integer(args[2])
+nsetting <- as.integer(args[3])
 
 # for debugging purposes isetting any value between 1-6(length of sample size), nsim = 10, nsetting = 4(equal to the number of total_T)
 isetting = 1
 nsim = 1
-nsetting = dim(SD)[1]
+nsetting = 723
 
 setting_start <- (isetting - 1)* nsetting + 1
 setting_end <- isetting * nsetting
