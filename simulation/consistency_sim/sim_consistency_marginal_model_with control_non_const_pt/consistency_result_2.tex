@@ -1,0 +1,173 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{subfig}
+\floatplacement{figure}{H}
+\usepackage{subfig}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Simulation},
+  pdfauthor={Jeremy J Lin},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Simulation}
+\author{Jeremy J Lin}
+\date{2026-08-03}
+
+\begin{document}
+\maketitle
+
+\subsection{Simulation Setting}\label{simulation-setting}
+
+Data Generative Model
+
+\begin{align*}
+E(Y_t|H_t, A_t) &= \{0.2 \times 1_{(Z_t = 0)} + 0.5 \times 1_{(Z_t = 1)} + 0.4 \times 1_{(Z_t = 2)}\} e^{((0.1 \times 1_{(A_t = 1)} + 0.25 \times 1_{(A_t = 1)} ) \times 0.3 Z_t)}\\
+Z_t &= (0, 1, 2) \text{ with equal probability.}\\
+Y_t &\sim Bern(E(Y_t | H_t, A_t))
+\end{align*}
+
+\subsection{Treatment 1 effect}\label{treatment-1-effect}
+
+\begin{table}[H]
+\centering
+\caption{\label{tab:unnamed-chunk-5}Performance of MEE}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabu} to \linewidth {>{\raggedleft}X>{\raggedright}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X}
+\toprule
+Sample size & Method & Bias & SE & CP & RMSE\\
+\midrule
+20 & WCLS & 0.00641 & 0.11987 & 0.947 & 0.12004\\
+30 & WCLS & -0.00410 & 0.09599 & 0.954 & 0.09608\\
+40 & WCLS & -0.00671 & 0.08094 & 0.968 & 0.08122\\
+50 & WCLS & 0.00216 & 0.07324 & 0.953 & 0.07327\\
+100 & WCLS & 0.00330 & 0.05099 & 0.955 & 0.05110\\
+\addlinespace
+20 & GEE1 & 0.14325 & 0.11876 & 0.752 & 0.18608\\
+30 & GEE1 & 0.13122 & 0.09363 & 0.702 & 0.16120\\
+40 & GEE1 & 0.12974 & 0.07972 & 0.648 & 0.15227\\
+50 & GEE1 & 0.13802 & 0.07047 & 0.513 & 0.15497\\
+100 & GEE1 & 0.13759 & 0.04957 & 0.207 & 0.14624\\
+\addlinespace
+20 & GEE2 & 0.14322 & 0.11865 & 0.749 & 0.18598\\
+30 & GEE2 & 0.13118 & 0.09383 & 0.700 & 0.16129\\
+40 & GEE2 & 0.12977 & 0.07986 & 0.645 & 0.15237\\
+50 & GEE2 & 0.13804 & 0.07051 & 0.515 & 0.15500\\
+100 & GEE2 & 0.13754 & 0.04963 & 0.211 & 0.14622\\
+\bottomrule
+\end{tabu}}
+\end{table}
+
+\subsection{Treatment 2 effect}\label{treatment-2-effect}
+
+\begin{table}[H]
+\centering
+\caption{\label{tab:unnamed-chunk-6}Performance of MEE}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabu} to \linewidth {>{\raggedleft}X>{\raggedright}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X>{\raggedleft}X}
+\toprule
+Sample size & Method & Bias & SE & CP & RMSE\\
+\midrule
+20 & WCLS & 0.00804 & 0.12060 & 0.959 & 0.12086\\
+30 & WCLS & -0.00392 & 0.09491 & 0.956 & 0.09499\\
+40 & WCLS & -0.00293 & 0.08129 & 0.962 & 0.08134\\
+50 & WCLS & 0.00183 & 0.07709 & 0.938 & 0.07711\\
+100 & WCLS & 0.00374 & 0.05223 & 0.960 & 0.05236\\
+\addlinespace
+20 & GEE1 & 0.06525 & 0.11684 & 0.895 & 0.13382\\
+30 & GEE1 & 0.05392 & 0.09110 & 0.904 & 0.10587\\
+40 & GEE1 & 0.05506 & 0.07928 & 0.897 & 0.09652\\
+50 & GEE1 & 0.05977 & 0.07353 & 0.863 & 0.09476\\
+100 & GEE1 & 0.05997 & 0.04994 & 0.794 & 0.07804\\
+\addlinespace
+20 & GEE2 & 0.06541 & 0.11671 & 0.895 & 0.13379\\
+30 & GEE2 & 0.05383 & 0.09122 & 0.903 & 0.10592\\
+40 & GEE2 & 0.05512 & 0.07924 & 0.896 & 0.09653\\
+50 & GEE2 & 0.05974 & 0.07362 & 0.865 & 0.09481\\
+100 & GEE2 & 0.05990 & 0.04998 & 0.796 & 0.07801\\
+\bottomrule
+\end{tabu}}
+\end{table}
+
+\end{document}
