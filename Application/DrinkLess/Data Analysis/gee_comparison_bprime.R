@@ -6,7 +6,7 @@
 # Analysis (b') refits analysis (b) (the CEE moderated by the decision point index)
 # with the nuisance model deliberately misspecified: the decision point index and the
 # lagged outcome are removed from g_t, so that no covariate in g_t tracks the decline
-# in app opening over the study. Its purpose is to check that the close EMEE / GEE-ind
+# in app opening over the study. Its purpose is to check that the close EMEE-catA / GEE-ind
 # agreement in analysis (b) does not reflect a fortunately specified nuisance model.
 # In the GEE and GLMM mean models the main effect of the decision point index remains,
 # as the treatment-by-index interaction terms require.

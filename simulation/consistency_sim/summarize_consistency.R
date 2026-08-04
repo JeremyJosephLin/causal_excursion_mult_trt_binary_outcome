@@ -55,7 +55,7 @@ collect <- function(label) {
     g2e <- grab("gee2_est"); g2s <- grab("gee2_se")
     for (j in seq_along(tru)) {
       out[[length(out) + 1]] <- data.frame(
-        sample_size = as.integer(nm), coef = COEF_LABEL[[label]][j], method = "EMEE",
+        sample_size = as.integer(nm), coef = COEF_LABEL[[label]][j], method = "EMEE-catA",
         t(metrics(emee_est[, j], emee_se[, j], emee_lb[, j], emee_ub[, j], tru[j])))
       out[[length(out) + 1]] <- data.frame(
         sample_size = as.integer(nm), coef = COEF_LABEL[[label]][j], method = "GEE-ind",
@@ -80,12 +80,12 @@ print(s1, row.names = FALSE, digits = 4)
 cat("\n\n%%% LaTeX body for tbl:est_moderator %%%\n")
 for (trt in 1:2) {
   ci <- if (trt == 1) c("trt1 Intercept", "trt1 Z_t") else c("trt2 Intercept", "trt2 Z_t")
-  for (meth in c("EMEE", "GEE-ind", "GEE-exch")) {
+  for (meth in c("EMEE-catA", "GEE-ind", "GEE-exch")) {
     for (k in seq_along(sort(unique(s1$sample_size)))) {
       n <- sort(unique(s1$sample_size))[k]
       a <- s1[s1$sample_size == n & s1$coef == ci[1] & s1$method == meth, ]
       b <- s1[s1$sample_size == n & s1$coef == ci[2] & s1$method == meth, ]
-      lead <- if (k == 1 && meth == "EMEE") sprintf("%d & %s\n ", trt, meth)
+      lead <- if (k == 1 && meth == "EMEE-catA") sprintf("%d & %s\n ", trt, meth)
               else if (k == 1) sprintf(" & %s\n ", meth) else " & "
       cat(sprintf("%s& %-3d & %s & %s & %s & %s & %s & %s & %s & %s \\\\\n",
                   lead, n, fmt(a$bias), fmt(a$sd), fmt(a$se), fmtcp(a$cp),
@@ -104,11 +104,11 @@ emit_marginal <- function(label, header, tag) {
   cat("\n\n%%% LaTeX body for ", tag, " %%%\n", sep = "")
   for (trt in 1:2) {
     cf <- paste0("trt", trt)
-    for (meth in c("EMEE", "GEE-ind", "GEE-exch")) {
+    for (meth in c("EMEE-catA", "GEE-ind", "GEE-exch")) {
       for (k in seq_along(sort(unique(d$sample_size)))) {
         n <- sort(unique(d$sample_size))[k]
         a <- d[d$sample_size == n & d$coef == cf & d$method == meth, ]
-        lead <- if (k == 1 && meth == "EMEE") sprintf("%d & %s\n ", trt, meth)
+        lead <- if (k == 1 && meth == "EMEE-catA") sprintf("%d & %s\n ", trt, meth)
                 else if (k == 1) sprintf(" & %s\n ", meth) else " & "
         cat(sprintf("%s& %-3d & %s & %s & %s & %s \\\\\n",
                     lead, n, fmt(a$bias), fmt(a$sd), fmt(a$se), fmtcp(a$cp)))

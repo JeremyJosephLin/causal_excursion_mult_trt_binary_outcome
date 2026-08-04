@@ -1,10 +1,11 @@
-# Drink Less: the proposed estimator (EMEE) against log-link GEE
+# Drink Less: the proposed estimator, EMEE-catA, against log-link GEE
 # ------------------------------------------------------------------
 # Written for the Statistics in Biosciences revision (reviewer 2, comment 6): how do the
 # findings compare with what a GEE or mixed-model analysis of the same data would give?
 #
 # Fits, for the marginal model (a) and the AUDIT-moderated model (c):
-#   EMEE  the estimator of the paper, with the small-sample adjusted standard error;
+#   EMEE      the estimator of the paper, EMEE-catA, with the small-sample adjusted
+#             standard error. Printed as EMEE below, which is its name in the code;
 #   GEE-ind   Poisson log link, working independence, robust standard errors
 #             (the longitudinal form of Zou's modified Poisson regression);
 #   GEE-exch  Poisson log link, exchangeable working correlation, robust standard errors;
