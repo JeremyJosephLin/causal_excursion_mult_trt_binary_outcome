@@ -1,7 +1,7 @@
 # Rscript for consistency simulation using Marginal Model 
 # E(Y_t) depends on both Treatment assignment and Moderator variable Z_t
 # 2026/07/09 updated the interaction effect between two treatment to be different
-# Use for comparing wcls , GEE, and GLMM 
+# Use for comparing EMEE-catA, GEE, and GLMM 
 # See GoodNotes for more details
 
 dgm_1_nonflat <- function(sample_size, total_T) {
@@ -21,7 +21,7 @@ dgm_1_nonflat <- function(sample_size, total_T) {
   # vary with any individual-level history. Here, prob_A depends on each
   # individual's own S_t, so p_t(A_t | H_t) is genuinely history-dependent and
   # not flat. The target/reference distribution used to define the causal
-  # estimand (e.g. tilde p_t(A_t | S_t) = 1/3 for WCLS reweighting) should be
+  # estimand (e.g. tilde p_t(A_t | S_t) = 1/3 for EMEE reweighting) should be
   # specified separately downstream -- it is NOT the same as the randomization
   # probability generated here.
   

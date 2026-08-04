@@ -1,6 +1,6 @@
 # dgm function 
 
-#source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
+##source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
 
 dgm <- function(sample_size, total_T, ft, beta_1, beta_2, gt, alpha, tau, pt, mean_var = 1, j_t = NULL, h_At = NULL) {
   # variable A represent the treatment level  (0 , 1 , 2)

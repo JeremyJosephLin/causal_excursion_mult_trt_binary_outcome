@@ -194,8 +194,8 @@ mrt_mult_trt_ss <- function(f_t,
 # Test cases
 #--------------------------------------------------------------------
 # rm(list = ls(all = TRUE))
-# source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/wcls_cat_trt_binary_outcome.R")
-# source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
+# source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/emee_catA.R")
+# #source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
 # 
 # # two level treatment (ctrl, trt 1 , trt 2) with 15 time points
 # m <- 15 # number of total Time

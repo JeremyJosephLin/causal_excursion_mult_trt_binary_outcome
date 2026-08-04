@@ -22,8 +22,8 @@ Run ss_calculator_sample_code.R for an example of using the sample size calculat
 	4. ss_calc.R
 	Core sample size calculator implementation for a binary outcome.
 
-	5. wcls_cat_binary_outcome.R
-	Estimator for the marginal excursion effect using weighted and centered least squares (WCLS).
+	5. emee_catA.R
+	Estimator for the marginal excursion effect with categorical treatments, EMEE-catA.
 
 
 

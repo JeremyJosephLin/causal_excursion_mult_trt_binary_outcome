@@ -115,40 +115,40 @@ param <- c(true_beta1, true_beta2)
 coef_est <- data.frame(
   sample_size = na_vec,
   total_T = na_vec,
-  bias_beta_1_wcls = na_vec,
-  bias_beta_2_wcls = na_vec,
+  bias_beta_1_emee = na_vec,
+  bias_beta_2_emee = na_vec,
   bias_beta_1_GEE1 = na_vec, 
   bias_beta_2_GEE1 = na_vec,
   bias_beta_1_GEE2 = na_vec, 
   bias_beta_2_GEE2 = na_vec,
-  thSE_beta_1_wcls = na_vec,
-  thSE_beta_2_wcls = na_vec,
+  thSE_beta_1_emee = na_vec,
+  thSE_beta_2_emee = na_vec,
   thSE_beta_1_GEE1= na_vec,
   thSE_beta_2_GEE1 = na_vec,
   thSE_beta_1_GEE2= na_vec,
   thSE_beta_2_GEE2 = na_vec,
-  SE_beta_1_wcls = na_vec,
-  SE_beta_2_wcls = na_vec,
+  SE_beta_1_emee = na_vec,
+  SE_beta_2_emee = na_vec,
   SE_beta_1_GEE1 = na_vec,
   SE_beta_2_GEE1 = na_vec,
   SE_beta_1_GEE2 = na_vec,
   SE_beta_2_GEE2 = na_vec,
-  RMSE_beta_1_wcls = na_vec,
-  RMSE_beta_2_wcls = na_vec,
+  RMSE_beta_1_emee = na_vec,
+  RMSE_beta_2_emee = na_vec,
   RMSE_beta_1_GEE1 = na_vec,
   RMSE_beta_2_GEE1 = na_vec,
   RMSE_beta_1_GEE2 = na_vec,
   RMSE_beta_2_GEE2 = na_vec,
-  # th_se_beta_1_adj_wcls = na_vec,
-  # th_se_beta_2_adj_wcls = na_vec,
-  cp_beta_1_wcls = na_vec,
-  cp_beta_2_wcls = na_vec,
+  # th_se_beta_1_adj_emee = na_vec,
+  # th_se_beta_2_adj_emee = na_vec,
+  cp_beta_1_emee = na_vec,
+  cp_beta_2_emee = na_vec,
   cp_beta_1_GEE1 = na_vec,
   cp_beta_2_GEE1 = na_vec,
   cp_beta_1_GEE2 = na_vec,
   cp_beta_2_GEE2 = na_vec,
-  beta_1_ci_lb_adj_t_wcls = na_vec,
-  beta_2_ci_lb_adj_t_wcls = na_vec,
+  beta_1_ci_lb_adj_t_emee = na_vec,
+  beta_2_ci_lb_adj_t_emee = na_vec,
   beta_1_ci_lb_GEE1 = na_vec,
   beta_2_ci_lb_GEE1 = na_vec,
   beta_1_ci_ub_GEE1 = na_vec,
@@ -168,24 +168,24 @@ for(j in 1:length(result_list)) {
   
   # Store the coefficient from lme for all simulation
   # row = coef, col = simulation
-  coef_method <- sapply(result_list[[j]]$result, function(l) l$beta_hat_wcls)
-  th_se <- sapply(result_list[[j]]$result, function(l) l$beta_se_wcls)
-  th_se_adj <- sapply(result_list[[j]]$result, function(l) l$beta_se_adjusted_wcls)
+  coef_method <- sapply(result_list[[j]]$result, function(l) l$beta_hat_emee)
+  th_se <- sapply(result_list[[j]]$result, function(l) l$beta_se_emee)
+  th_se_adj <- sapply(result_list[[j]]$result, function(l) l$beta_se_adjusted_emee)
   ci_adj_lb_t <- sapply(result_list[[j]]$result, function(l) l$ci_adj_t[,1])
   ci_adj_ub_t <- sapply(result_list[[j]]$result, function(l) l$ci_adj_t[,2])
 
   
   
   # Average of all betas (simulation  - true coef),
-  coef_est[j, c("bias_beta_1_wcls", "bias_beta_2_wcls")] <- rowMeans(coef_method, na.rm = TRUE) - param
-  coef_est[j, c("thSE_beta_1_wcls", "thSE_beta_2_wcls")] <- rowMeans(th_se_adj, na.rm = TRUE)
-  coef_est[j, c("SE_beta_1_wcls", "SE_beta_2_wcls")] <- apply(coef_method, 1, function(x) sd(x, na.rm = TRUE))
-  #coef_est[j, c("th_se_beta_1_adj_wcls", "th_se_beta_2_adj_wcls")] <- rowMeans(th_se_adj, na.rm = TRUE)
+  coef_est[j, c("bias_beta_1_emee", "bias_beta_2_emee")] <- rowMeans(coef_method, na.rm = TRUE) - param
+  coef_est[j, c("thSE_beta_1_emee", "thSE_beta_2_emee")] <- rowMeans(th_se_adj, na.rm = TRUE)
+  coef_est[j, c("SE_beta_1_emee", "SE_beta_2_emee")] <- apply(coef_method, 1, function(x) sd(x, na.rm = TRUE))
+  #coef_est[j, c("th_se_beta_1_adj_emee", "th_se_beta_2_adj_emee")] <- rowMeans(th_se_adj, na.rm = TRUE)
 
   
   # see if it's inside the confidence interval
   # adj cp with t
-  coef_est[j, c("cp_beta_1_wcls", "cp_beta_2_wcls")] <-
+  coef_est[j, c("cp_beta_1_emee", "cp_beta_2_emee")] <-
     sapply(1:2, function(i)
       mean(
         (param[i] >= ci_adj_lb_t[i,]) &
@@ -194,11 +194,11 @@ for(j in 1:length(result_list)) {
       ))
   
   # mse = bias^2 + variance unadj
-  coef_est[j, c("RMSE_beta_1_wcls", "RMSE_beta_2_wcls")] <- sqrt((coef_est[j, c("bias_beta_1_wcls", "bias_beta_2_wcls")]) ^ 2 + (coef_est[j, c("SE_beta_1_wcls", "SE_beta_2_wcls")] ) ^ 2)
+  coef_est[j, c("RMSE_beta_1_emee", "RMSE_beta_2_emee")] <- sqrt((coef_est[j, c("bias_beta_1_emee", "bias_beta_2_emee")]) ^ 2 + (coef_est[j, c("SE_beta_1_emee", "SE_beta_2_emee")] ) ^ 2)
 
   # ci t-adjusted lowerbound and upperbound
-  coef_est[j, c("beta_1_ci_lb_adj_t_wcls", "beta_2_ci_lb_adj_t_wcls")] <- rowMeans(ci_adj_lb_t, na.rm = TRUE)
-  coef_est[j, c("beta_1_ci_ub_adj_t_wcls", "beta_2_ci_ub_adj_t_wcls")] <- rowMeans(ci_adj_ub_t, na.rm = TRUE)
+  coef_est[j, c("beta_1_ci_lb_adj_t_emee", "beta_2_ci_lb_adj_t_emee")] <- rowMeans(ci_adj_lb_t, na.rm = TRUE)
+  coef_est[j, c("beta_1_ci_ub_adj_t_emee", "beta_2_ci_ub_adj_t_emee")] <- rowMeans(ci_adj_ub_t, na.rm = TRUE)
 
   
   # store coef from GEE1 
@@ -268,7 +268,7 @@ df_long <- coef_est %>%
   pivot_longer(
     cols = -c(sample_size),
     names_to  = c("metric", "param", "method"),
-    names_pattern = "(bias|SE|cp|RMSE)_(beta_?[12])_(wcls|GEE1|GEE2)",
+    names_pattern = "(bias|SE|cp|RMSE)_(beta_?[12])_(emee|GEE1|GEE2)",
     values_to = "value"
   ) %>%
   mutate(method = toupper(method)) %>%
@@ -282,7 +282,7 @@ df_long <- coef_est %>%
 
 ```{r, results='asis'}
 result <- df_long %>% filter(param == "beta_1") %>% dplyr::select(-param) %>% 
-  mutate(method = factor(method, levels = c("WCLS", "GEE1", "GEE2"))) %>%
+  mutate(method = factor(method, levels = c("EMEE", "GEE1", "GEE2"))) %>%
   arrange(method, sample_size)
 
 print(
@@ -306,7 +306,7 @@ kable(
 
 ```{r, results='asis'}
 result <- df_long %>% filter(param == "beta_2") %>% dplyr::select(-param) %>% 
-  mutate(method = factor(method, levels = c("WCLS", "GEE1", "GEE2"))) %>%
+  mutate(method = factor(method, levels = c("EMEE", "GEE1", "GEE2"))) %>%
   arrange(method, sample_size)
 
 print(

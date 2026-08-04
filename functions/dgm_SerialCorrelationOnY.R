@@ -1,6 +1,6 @@
 # dgm function 
 
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
+#source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
 
 dgm_SerialCorrelationOnY <- function(sample_size, total_T, ft, beta_1, beta_2, gt, alpha, tau, pt, coef_SC) {
   # variable A represent the treatment level  (0 , 1 , 2)

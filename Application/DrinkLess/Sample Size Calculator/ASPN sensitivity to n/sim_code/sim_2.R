@@ -1,7 +1,7 @@
 # This code to fill in SD using sample size calculator in HPC, run with 63 setting with 871 simulation per setting
 rm(list = ls())
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-source("wcls_cat_trt_binary_outcome.R")
+source("emee_catA.R")
 source("utillity.R")
 source("ss_calc.R")
 source("dgm.R")

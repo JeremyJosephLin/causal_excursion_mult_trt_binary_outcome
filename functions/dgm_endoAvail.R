@@ -2,7 +2,7 @@
 ### dgm with endogenous availability process ###
 
 
-#source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
+##source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
 
 dgm_endoAvail <- function(sample_size, total_T, ft, beta_1, beta_2, gt, alpha,
                           gamma3, gamma4, gamma5,

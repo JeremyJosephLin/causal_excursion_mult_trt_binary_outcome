@@ -68,9 +68,8 @@ dgm <- function(sample_size, total_T, tau, pt) {
 }
 
 
-# for debugging puposes
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-source("functions_util.R")
+# The block below is what generated toy_data.RDS. Run it from this folder.
+source("../../functions/utillity.R")
 ## m
 total_T <- 15
 sample_size = 50

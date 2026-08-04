@@ -1,4 +1,4 @@
-# run ".../misc/toy_example" for an example how to to use wcls estimator.
+# run ".../misc/toy_example" for an example of how to use the EMEE-catA estimator.
 # 04/04 :debuged and updated generalized for input in tibble and fix decission time variable
 # 04/07 : Added dependecies for multi root packages 
 # 10/08 : fixed bugs where estimator doesnt work when decision_time_varname doesnt start from 0 
@@ -9,7 +9,7 @@ if(!require(rootSolve)){
 }
 
 
-#------------------ wcls categorical treatment ---------------------------------
+#------------------ EMEE-catA: categorical treatment ---------------------------
 # TQ estimator can be found in R_Code/ estimator_MEE.R
 #' Estimates the marginal excursion effect for continuous outcome MRT 
 #' with categorical treatment
@@ -51,7 +51,8 @@ if(!require(rootSolve)){
 #' @import rootSolve
 #' @export 
 #'
-#' @exampleswcls_categorical_treatment(dta = dta,
+#' @examples
+#' emee_catA(dta = dta,
 #'                                          id_varname = "userid",
 #'                                          decision_time_varname = "time",
 #'                                          treatment_varname = "A",
@@ -63,7 +64,7 @@ if(!require(rootSolve)){
 #'                                          trt_level = 2,
 #'                                          pmatrix_tilde = NULL,
 #'                                          avail_varname = avail_varname)
-wcls_categorical_treatment <- function(
+emee_catA <- function(
     dta,
     id_varname,
     decision_time_varname,
@@ -323,7 +324,7 @@ wcls_categorical_treatment <- function(
 
 # utility function to run 
 
-#' Extract coefficient from wcls estimator
+#' Extract coefficient from the EMEE-catA estimator
 #' Returns the coefficient of beta and alpha from the multiroot function
 #'
 #' @param root solution obtained from multiroot 

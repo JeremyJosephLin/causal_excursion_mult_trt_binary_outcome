@@ -1,6 +1,16 @@
-# This is the R_code example on how to use binary sample size calculator 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-source("wcls_cat_trt_binary_outcome.R")
+# This is the R_code example on how to use binary sample size calculator
+# Works both with Rscript and inside RStudio: locate this script's own folder.
+setwd(local({
+  a <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
+  if (length(a)) {
+    dirname(normalizePath(sub("^--file=", "", a[1])))
+  } else if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
+    dirname(rstudioapi::getActiveDocumentContext()$path)
+  } else {
+    getwd()
+  }
+}))
+source("emee_catA.R")
 source("ss_calc.R")
 library(dplyr)
 library(rootSolve)
@@ -24,7 +34,7 @@ outcome_varname = c("Y")
 moderator_varname = c()
 control_varname <- c()
 
-fit1 <- wcls_categorical_treatment(
+fit1 <- emee_catA(
   dta = dta,
   id_varname = id_varname,
   decision_time_varname = decision_time_varname,
@@ -43,8 +53,8 @@ fit1$beta_hat
 # Intercept : trt = 1 Intercept : trt = 2 Intercept : trt = 3 
 # -0.1240791          -0.3103041          -0.2582578 
 
-# estimated log ASPN (for sample size estimation)
-fit$alpha_hat
+# estimated nuisance parameters of g_t
+fit1$alpha_hat
 
 #Confidence Interval with small sample size correction
 fit1$conf_int_adjusted_t
@@ -56,7 +66,7 @@ fit1$conf_int_adjusted_t
 moderator_varname = c("time")
 control_varname <- c("time", "sex")
 
-fit2 <- wcls_categorical_treatment(
+fit2 <- emee_catA(
   dta = dta,
   id_varname = id_varname,
   decision_time_varname = decision_time_varname,

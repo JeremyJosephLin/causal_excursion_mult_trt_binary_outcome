@@ -1,6 +1,6 @@
 # These are codes needed to run for simulations 
-wcls_summary <- function(fit){
-  # create a function that calculate p-value of our wcls estimator
+emee_catA_summary <- function(fit){
+  # create a function that calculate p-value of our EMEE-catA estimator
   # calculate degree of freedom 
   n <- fit$dims$n
   p <- fit$dims$p
@@ -29,7 +29,7 @@ wcls_summary <- function(fit){
 
 
 # between treatment marginal
-wcls_glh <- function(fit, L){
+emee_catA_glh <- function(fit, L){
   # q already include intercept
   q <- fit$dims$q
   n <- fit$dims$n

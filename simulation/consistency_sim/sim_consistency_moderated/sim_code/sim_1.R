@@ -5,7 +5,7 @@
 rm(list = ls(all = TRUE))
 #setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # call functions
-source("wcls_cat_trt_binary_outcome.R")
+source("emee_catA.R")
 source("dgm.R")
 
 # load library fpr GEE and Lmm
@@ -77,7 +77,7 @@ for (i in setting_start:setting_end) {
     
    
     # Fit TQ estimator
-    fit_wcls  <- wcls_categorical_treatment(
+    fit_emee  <- emee_catA(
         dta = dta,
         id_varname = "userid",
         decision_time_varname = "time",
@@ -91,15 +91,15 @@ for (i in setting_start:setting_end) {
         pmatrix_tilde = NULL,
         avail_varname = NULL
       )
-      beta_hat_wcls = fit_wcls$beta_hat
-      beta_se_wcls = fit_wcls$beta_se
-      varcov_wcls = fit_wcls$varcov
-      beta_se_adjusted_wcls = fit_wcls$beta_se_adjusted
-      varcov_adjusted_wcls = fit_wcls$varcov_adjusted
-      ci_unadj_wcls = fit_wcls$conf_int
-      ci_adj_z_wcls = fit_wcls$conf_int_adjusted_z
-      ci_adj_t_wcls = fit_wcls$conf_int_adjusted_t
-      p_tilde = fit_wcls$p_tilde
+      beta_hat_emee = fit_emee$beta_hat
+      beta_se_emee = fit_emee$beta_se
+      varcov_emee = fit_emee$varcov
+      beta_se_adjusted_emee = fit_emee$beta_se_adjusted
+      varcov_adjusted_emee = fit_emee$varcov_adjusted
+      ci_unadj_emee = fit_emee$conf_int
+      ci_adj_z_emee = fit_emee$conf_int_adjusted_z
+      ci_adj_t_emee = fit_emee$conf_int_adjusted_t
+      p_tilde = fit_emee$p_tilde
       
       # fit dataset with GEE and Independent Variance covariance matrix
       fit_GEE1  <- geeglm(Y ~ A1*S + A2*S, data = dta, id = userid,
@@ -128,14 +128,14 @@ for (i in setting_start:setting_end) {
     
     output <- list(
       list(
-        beta_hat_wcls = beta_hat_wcls,
-        beta_se_wcls = beta_se_wcls,
-        varcov_wcls = varcov_wcls,
-        beta_se_adjusted_wcls = beta_se_adjusted_wcls,
-        varcov_adjusted_wcls = varcov_adjusted_wcls,
-        ci_unadj_wcls = ci_unadj_wcls,
-        ci_adj_z = ci_adj_z_wcls,
-        ci_adj_t = ci_adj_t_wcls,
+        beta_hat_emee = beta_hat_emee,
+        beta_se_emee = beta_se_emee,
+        varcov_emee = varcov_emee,
+        beta_se_adjusted_emee = beta_se_adjusted_emee,
+        varcov_adjusted_emee = varcov_adjusted_emee,
+        ci_unadj_emee = ci_unadj_emee,
+        ci_adj_z = ci_adj_z_emee,
+        ci_adj_t = ci_adj_t_emee,
         p_tilde = p_tilde,
         beta_hat_GEE1 = beta_hat_GEE1, 
         beta_se_GEE1 = beta_se_GEE1, 
