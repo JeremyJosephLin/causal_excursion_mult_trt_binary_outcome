@@ -168,10 +168,13 @@ save_fig("size Drink Less 1 - n vs ASPN, ATE (contour)", height = 6, width = 6)
 ## ------------------------------------------------------------------ DL2: n vs theta_f1
 
 g2 <- expand.grid(ft_theta = seq(-1, 1, by = 0.01),
-                  ft_shape = "linear_theta", gt_shape = "quadratic_theta", gt_theta = 0.2,
+                  ft_shape = "linear_theta", gt_shape = "constant",
                   stringsAsFactors = FALSE)
 g2 <- grid_n(g2, "star")
-n2_ref <- compute_n(ft_shape = "constant", gt_shape = "quadratic_theta", gt_theta = 0.2)
+# SPNC(t) is held constant here, as it is in every other panel of the subsection:
+# Section 5.2 states that the illustration assumes a constant SPNC(t). The dashed
+# reference is therefore the same n = 1197 that Figure 1(a) marks.
+n2_ref <- n_reference
 note("DL2: ", nrow(g2), " points, n from ", min(g2$n), " to ", max(g2$n),
      "; constant-MEE reference n = ", n2_ref)
 
@@ -179,7 +182,7 @@ note("DL2: ", nrow(g2), " points, n from ", min(g2$n), " to ", max(g2$n),
 
 g3 <- expand.grid(ft_theta2 = seq(-1, 1, by = 0.01),
                   ft_theta = c(-0.3, 0, 0.3),
-                  ft_shape = "linear_theta", gt_shape = "quadratic_theta", gt_theta = 0.2,
+                  ft_shape = "linear_theta", gt_shape = "constant",
                   stringsAsFactors = FALSE)
 g3 <- grid_n(g3, "star")
 n3_ref <- n2_ref
@@ -311,6 +314,6 @@ save_fig("size Drinkless 3 - n vs theta_tau", height = 4, width = 7)
 
 writeLines(log_lines, file.path(OUT, "summary.txt"))
 saveRDS(list(DL1 = g1, DL2 = g2, DL3 = g3, DL4 = g4, DL5 = g5, DL6 = g6, DL7 = g7,
-             reference = c(constant = n_reference, quadratic_spnc = n2_ref)),
+             reference = c(constant = n_reference)),
          file.path(OUT, "figure_grids.RDS"))
 cat("\nwrote", length(list.files(OUT, pattern = "\\.(pdf|jpg)$")), "figure files to", OUT, "\n")
