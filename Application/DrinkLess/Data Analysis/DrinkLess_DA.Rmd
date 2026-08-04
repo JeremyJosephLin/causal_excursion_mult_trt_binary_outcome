@@ -65,7 +65,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE,
                       fig.pos = 'H', cache = FALSE, 
                       eval = TRUE)
 # load data set 
-source(here("functions", "wcls_cat_trt_binary_outcome.R"))
+source(here("functions", "emee_catA.R"))
 source(here("functions", "functions_util.R"))
 ```
 
@@ -136,6 +136,12 @@ saveRDS(dta, "DrinkLess_processed.RDS")
 dta <- readRDS(here("dataset","DrinkLess_processed.RDS"))
 # fitting our estimator 
 id_varname = c("ID")
+
+# tilde p is set to the trial's randomization probability, so that J_t = 1 throughout,
+# matching Section 5.1 of the paper. The estimator's own default is 1/3 per level.
+# The matrix is decision points by treatment levels, columns ordered (0, 1, 2).
+N_TIME <- length(unique(dta$decision_index))
+PTILDE <- matrix(rep(c(0.4, 0.3, 0.3), times = N_TIME), ncol = 3, byrow = TRUE)
 decision_time_varname = c("decision_index")
 treatment_varname = c("treatment_cate")
 
@@ -148,7 +154,7 @@ outcome_varname = c("binary_outcome")
 control_varname <- c()
 
 # Fit marginal model with ft = 1 and gt = 1 , use beta to approximate ATE and alpha to approximate ASPNC
-fit1 <- wcls_categorical_treatment(
+fit1 <- emee_catA(
   dta = dta,
   id_varname = id_varname,
   decision_time_varname = decision_time_varname,
@@ -159,7 +165,8 @@ fit1 <- wcls_categorical_treatment(
   rand_prob_varname = rand_prob_varname,
   avail_varname = avail_varname,
   trt_level = trt_level,
-  estimator_initial_value = NULL
+  estimator_initial_value = NULL,
+  pmatrix_tilde = PTILDE
 )
 
 #approximate ate1 
@@ -210,7 +217,7 @@ control_varname <- c("age", "AUDIT_score", "gender","decision_index", "binary_ou
 ```{r}
 moderator_varname <- c()
 
-fit1a <- wcls_categorical_treatment(
+fit1a <- emee_catA(
   dta = dta,
   id_varname = id_varname,
   decision_time_varname = decision_time_varname,
@@ -221,21 +228,22 @@ fit1a <- wcls_categorical_treatment(
   rand_prob_varname = rand_prob_varname,
   avail_varname = avail_varname,
   trt_level = trt_level,
-  estimator_initial_value = NULL
+  estimator_initial_value = NULL,
+  pmatrix_tilde = PTILDE
 )
 
 ```
 
 
 ```{r}
-fit_1a_summary <- wcls_summary(fit1a)
+fit_1a_summary <- emee_catA_summary(fit1a)
 res1a <- data.frame(Estimate =fit1a$beta_hat,
            Sd = fit1a$beta_se)
 res1a <- cbind(res1a, fit1a$conf_int_adjusted_t, p_val = fit_1a_summary$`Pr(>|t|)`)
 
 # # between treatment marginal
 L1a <- matrix(c(-1, 1), nrow = 1)
-diff1a <- wcls_glh(fit1a, L1a)
+diff1a <- emee_catA_glh(fit1a, L1a)
 
 resdiff1a <- cbind(estimator = diff1a$summary$Estimate, sd = diff1a$summary$`Std. Error`, 
                      diff1a$conf_int, pval = diff1a$summary$`Pr(>|t|)`)
@@ -252,7 +260,7 @@ exp(res1a)
 # fit 1 b use time as moderator
 moderator_varname = c("decision_index")
 
-fit1b <- wcls_categorical_treatment(
+fit1b <- emee_catA(
   dta = dta,
   id_varname = id_varname,
   decision_time_varname = decision_time_varname,
@@ -263,18 +271,19 @@ fit1b <- wcls_categorical_treatment(
   rand_prob_varname = rand_prob_varname,
   avail_varname = avail_varname,
   trt_level = trt_level,
-  estimator_initial_value = NULL
+  estimator_initial_value = NULL,
+  pmatrix_tilde = PTILDE
 )
 ```
 
 ```{r}
-fit_1b_summary <- wcls_summary(fit1b)
+fit_1b_summary <- emee_catA_summary(fit1b)
 res1b <- data.frame(Estimate =fit1b$beta_hat,
            Sd = fit1b$beta_se)
 res1b <- cbind(res1b, fit1b$conf_int_adjusted_t, p_val = fit_1b_summary$`Pr(>|t|)`)
 
 L1b <- matrix(c(-1, 0, 1, 0, 0, -1, 0, 1), ncol = 4, byrow = TRUE)
-diff1b <- wcls_glh(fit1b, L1b)
+diff1b <- emee_catA_glh(fit1b, L1b)
 
 resdiff1b <- cbind(estimator = diff1b$summary$Estimate, sd = diff1b$summary$`Std. Error`, 
                      diff1b$conf_int, pval = diff1b$summary$`Pr(>|t|)`)
@@ -289,7 +298,7 @@ exp(res1b)
 # fit 1c use location as moderator, this will not be used for analysis
 moderator_varname = c("AUDIT_score")
 
-fit1c <- wcls_categorical_treatment(
+fit1c <- emee_catA(
   dta = dta,
   id_varname = id_varname,
   decision_time_varname = decision_time_varname,
@@ -300,10 +309,11 @@ fit1c <- wcls_categorical_treatment(
   rand_prob_varname = rand_prob_varname,
   avail_varname = avail_varname,
   trt_level = trt_level,
-  estimator_initial_value = NULL
+  estimator_initial_value = NULL,
+  pmatrix_tilde = PTILDE
 )
 
-fit_1c_summary <- wcls_summary(fit1c)
+fit_1c_summary <- emee_catA_summary(fit1c)
 
 res1c <- data.frame(Estimate =fit1c$beta_hat,
            Sd = fit1c$beta_se)
@@ -318,7 +328,7 @@ res1c <- cbind(res1c, fit1c$conf_int_adjusted_t, p_val = fit_1c_summary$`Pr(>|t|
 moderator_varname = c("AUDIT_harmful","AUDIT_atRisk")
 control_varname <- c("age", "AUDIT_harmful","AUDIT_atRisk","gender","decision_index", "binary_outcome.lag")
 
-fit1d <- wcls_categorical_treatment(
+fit1d <- emee_catA(
   dta = dta,
   id_varname = id_varname,
   decision_time_varname = decision_time_varname,
@@ -329,7 +339,8 @@ fit1d <- wcls_categorical_treatment(
   rand_prob_varname = rand_prob_varname,
   avail_varname = avail_varname,
   trt_level = trt_level,
-  estimator_initial_value = NULL
+  estimator_initial_value = NULL,
+  pmatrix_tilde = PTILDE
 )
 
 ```
@@ -337,7 +348,7 @@ fit1d <- wcls_categorical_treatment(
 
 
 ```{r}
-fit_1d_summary <- wcls_summary(fit1d)
+fit_1d_summary <- emee_catA_summary(fit1d)
 res1d <- data.frame(Estimate =fit1d$beta_hat,
            Sd = fit1d$beta_se )
 res1d <- cbind(res1d, fit1d$conf_int_adjusted_t, p_val = fit_1d_summary$`Pr(>|t|)`)
@@ -370,7 +381,7 @@ diff_matrix_1d[7,] <-  matrix(c(-1, 0, -1, 1, 0, 1), ncol = 6, byrow = TRUE)
 
 # test each effect 
 for (effect in 1:7) {
-  effect_temp <- wcls_glh(fit1d, matrix(diff_matrix_1d[effect, ], ncol = 6))
+  effect_temp <- emee_catA_glh(fit1d, matrix(diff_matrix_1d[effect, ], ncol = 6))
   AUDIT_result[effect, ] <- cbind(estimator = effect_temp$summary$Estimate, sd =effect_temp$summary$`Std. Error`, 
                      effect_temp$conf_int, pval = effect_temp$summary$`Pr(>|t|)`)
   }

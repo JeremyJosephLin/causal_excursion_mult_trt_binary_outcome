@@ -11,24 +11,31 @@
 # In the GEE and GLMM mean models the main effect of the decision point index remains,
 # as the treatment-by-index interaction terms require.
 #
-# Conventions match gee_comparison.R exactly: EMEE uses the estimator's default
-# tilde-p = 1/3 (as in Table 2 of the paper) and the small-sample adjusted standard
-# error; GEE-ind and GEE-exch use robust standard errors; the GLMM standard errors are
-# model based. For reference the script also reruns analysis (b), whose entries should
+# Conventions match gee_comparison.R exactly: tilde p is set to the trial's
+# randomization probability, so that J_t = 1 throughout, matching Section 5.1 of the
+# paper (the estimator's own default is 1/3 per level), and EMEE uses the small-sample
+# adjusted standard error; GEE-ind and GEE-exch use robust standard errors; the GLMM
+# standard errors are model based. For reference the script also reruns analysis (b), whose entries should
 # reproduce the response table.
 #
-# DATA must point at the Drink Less MRT dataset shared on OSF (https://osf.io/w3szp).
 
-DATA <- file.path("/Users/tqian/Dropbox (Personal)/data/DrinkLess MRT (Lauren Bell)",
-                  "2022.01 - DrinkLess OSF data sharing/FINAL Dataset_A.rds")
-REPO <- "~/repos/cat_trt_binary"
+# The Drink Less data file and the repository root are located the same way as in
+# reproduce_table2.R: put "FINAL Dataset_A.rds" from https://osf.io/w3szp in the
+# repository's dataset/ folder, or point DRINKLESS_DATA at it.
+HERE <- local({
+  a <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
+  if (length(a)) dirname(normalizePath(sub("^--file=", "", a[1]))) else getwd()
+})
+source(file.path(HERE, "prepare_drinkless_data.R"))
+DATA <- drinkless_data_path()
+REPO <- drinkless_repo_root()
 
 suppressPackageStartupMessages({
   library(dplyr)
   library(geepack)
   library(lme4)
 })
-source(file.path(REPO, "functions/wcls_cat_trt_binary_outcome.R"))
+source(file.path(REPO, "functions/emee_catA.R"))
 
 options(digits = 6, width = 120)
 
@@ -66,7 +73,7 @@ N_TIME <- length(unique(dta$decision_index))
 PTILDE <- matrix(rep(c(0.4, 0.3, 0.3), times = N_TIME), ncol = 3, byrow = TRUE)
 
 fit_emee <- function(control) {
-  wcls_categorical_treatment(
+  emee_catA(
     dta = dta, id_varname = "ID", decision_time_varname = "decision_index",
     treatment_varname = "treatment_cate", outcome_varname = "binary_outcome",
     control_varname = control, moderator_varname = "decision_index",

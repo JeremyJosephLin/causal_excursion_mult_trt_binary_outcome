@@ -27,7 +27,7 @@ file_arg <- grep("^--file=", args, value = TRUE)
 HERE     <- if (length(file_arg)) dirname(sub("^--file=", "", file_arg)) else getwd()
 source(file.path(HERE, "prepare_drinkless_data.R"))
 ROOT <- drinkless_repo_root()
-source(file.path(ROOT, "functions", "wcls_cat_trt_binary_outcome.R"))
+source(file.path(ROOT, "functions", "emee_catA.R"))
 source(file.path(ROOT, "functions", "functions_util.R"))
 source(file.path(ROOT, "functions", "ss_calc.R"))
 source(file.path(ROOT, "functions", "utillity.R"))
@@ -48,17 +48,23 @@ CONTROL   <- c("decision_index", "age", "gender", "employment_1", "employment_2"
 CONTROL_C <- c("decision_index", "age", "gender", "employment_1", "employment_2",
                "AUDIT_harmful", "AUDIT_atRisk", "binary_outcome.lag")
 
+## tilde p is set to the trial's randomization probability, so that J_t = 1 throughout,
+## matching Section 5.1 of the paper. The estimator's own default is 1/3 per level.
+## The matrix is decision points by treatment levels, columns ordered (0, 1, 2).
+N_TIME <- length(unique(dta$decision_index))
+PTILDE <- matrix(rep(c(0.4, 0.3, 0.3), times = N_TIME), ncol = 3, byrow = TRUE)
+
 fitwrap <- function(moderator, control) {
-  wcls_categorical_treatment(
+  emee_catA(
     dta = dta, id_varname = "ID", decision_time_varname = "decision_index",
     treatment_varname = "treatment_cate", outcome_varname = "binary_outcome",
     control_varname = control, moderator_varname = moderator,
     rand_prob_varname = "prob_A", avail_varname = "I",
-    trt_level = 2, estimator_initial_value = NULL)
+    trt_level = 2, estimator_initial_value = NULL, pmatrix_tilde = PTILDE)
 }
 
 beta_rows <- function(fit) {
-  s <- wcls_summary(fit)
+  s <- emee_catA_summary(fit)
   data.frame(Estimate = fit$beta_hat,
              SE       = fit$beta_se_adjusted,
              CI_lo    = fit$conf_int_adjusted_t[, 1],
@@ -66,7 +72,7 @@ beta_rows <- function(fit) {
              p        = s$`Pr(>|t|)`)
 }
 glh_rows <- function(fit, L, labels) {
-  g <- wcls_glh(fit, L)
+  g <- emee_catA_glh(fit, L)
   data.frame(row.names = labels,
              Estimate = g$summary$Estimate,
              SE       = g$summary$`Std. Error`,

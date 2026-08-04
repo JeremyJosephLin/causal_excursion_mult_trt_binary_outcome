@@ -28,18 +28,24 @@
 #        data (the original crossed participant boundaries on 349 of 10470 rows).
 # The decision point index starts at 0, which is the manuscript's convention.
 #
-# DATA must point at the Drink Less MRT dataset shared on OSF.
 
-DATA <- file.path("/Users/tqian/Dropbox (Personal)/data/DrinkLess MRT (Lauren Bell)",
-                  "2022.01 - DrinkLess OSF data sharing/FINAL Dataset_A.rds")
-REPO <- "~/repos/cat_trt_binary"
+# The Drink Less data file and the repository root are located the same way as in
+# reproduce_table2.R: put "FINAL Dataset_A.rds" from https://osf.io/w3szp in the
+# repository's dataset/ folder, or point DRINKLESS_DATA at it.
+HERE <- local({
+  a <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
+  if (length(a)) dirname(normalizePath(sub("^--file=", "", a[1]))) else getwd()
+})
+source(file.path(HERE, "prepare_drinkless_data.R"))
+DATA <- drinkless_data_path()
+REPO <- drinkless_repo_root()
 
 suppressPackageStartupMessages({
   library(dplyr)
   library(geepack)
   library(lme4)
 })
-source(file.path(REPO, "functions/wcls_cat_trt_binary_outcome.R"))
+source(file.path(REPO, "functions/emee_catA.R"))
 source(file.path(REPO, "functions/functions_util.R"))
 
 options(digits = 10)
@@ -89,7 +95,7 @@ PTILDE    <- matrix(rep(c(0.4, 0.3, 0.3), times = N_TIME), ncol = 3, byrow = TRU
 PTILDE_EQ <- matrix(rep(1/3, 3 * N_TIME), ncol = 3)
 
 fit_emee <- function(moderator, control, d = dta, ptilde = PTILDE) {
-  wcls_categorical_treatment(
+  emee_catA(
     dta = d, id_varname = "ID", decision_time_varname = "decision_index",
     treatment_varname = "treatment_cate", outcome_varname = "binary_outcome",
     control_varname = control, moderator_varname = moderator,

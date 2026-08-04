@@ -34,7 +34,7 @@ here_dir <- if (length(file_arg)) dirname(sub("^--file=", "", file_arg)) else ge
 ROOT     <- normalizePath(file.path(here_dir, "..", "..", ".."), mustWork = FALSE)
 stopifnot(dir.exists(file.path(ROOT, "functions")))
 
-source(file.path(ROOT, "functions", "wcls_cat_trt_binary_outcome.R"))
+source(file.path(ROOT, "functions", "emee_catA.R"))
 source(file.path(ROOT, "functions", "utillity.R"))
 source(file.path(ROOT, "functions", "ss_calc.R"))
 
