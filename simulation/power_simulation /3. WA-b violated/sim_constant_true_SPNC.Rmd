@@ -63,7 +63,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE,
                       fig.pos = 'H', cache = FALSE, 
                       eval = FALSE)
 # load functions
-source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
+# not part of this repository (a helper file from another project); the
+# chunks below are knit with eval = FALSE, so it is not needed
+#source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 ```
 
 <!-- Functions -->

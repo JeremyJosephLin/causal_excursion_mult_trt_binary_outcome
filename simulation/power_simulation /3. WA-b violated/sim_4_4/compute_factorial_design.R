@@ -1,10 +1,10 @@
 # This code generalize the simulation for sim_4_4 constant gt^* and linear gt^w
 
 rm(list = ls())
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/wcls_cat_trt_binary_outcome.R")
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/utillity.R")
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/ss_calc.R")
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/R_code/functions/dgm.R")
+source("../../../../functions/emee_catA.R")
+source("../../../../functions/utillity.R")
+source("../../../../functions/ss_calc.R")
+source("../../../../functions/dgm.R")
 
 # 1. Simulation design setup ----------------------------------------------
 
@@ -262,7 +262,7 @@ for (i in 1:nrow(SD)) {
 SD$error_indicator
 # get rid of SD that has error
 SD<- SD[which(SD$error_indicator ==0),]
-saveRDS(SD, file = "~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/simulations/power_simulation /3. WA-b violated/sim_4_4/sim_4_4a/factorial_design.RDS")
+saveRDS(SD, file = "factorial_design.RDS")
 
 dim(SD)
 SD[which(SD$error_indicator == 1),]

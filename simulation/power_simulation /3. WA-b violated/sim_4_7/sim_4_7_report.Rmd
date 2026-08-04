@@ -63,7 +63,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE,
                       fig.pos = 'H', cache = FALSE, 
                       eval = FALSE)
 # load functions
-source("~/Documents/Research/LMM_Project/dgm simutlations/R_functions.R")
+# not part of this repository (a helper file from another project); the
+# chunks below are knit with eval = FALSE, so it is not needed
+#source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 ```
 
 <!-- Functions -->
@@ -120,9 +122,9 @@ myggfont <- function(legend_pos = NULL,
 
 
 ```{r}
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/simulations/power_simulation /3. WA-b violated/sim_4_7/sim_4_7b/utillity.R")
+source("../../../../functions/utillity.R")
 # read simulation design 
-SD <- readRDS("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/simulations/power_simulation /3. WA-b violated/sim_4_7/sim_4_7b/factorial_design.RDS")
+SD <- readRDS("factorial_design.RDS")
 n_seed = 21 
 nsim = 1000
 truth_hypothesis = "H1"

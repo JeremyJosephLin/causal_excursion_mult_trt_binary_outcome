@@ -119,9 +119,9 @@ myggfont <- function(legend_pos = NULL,
 
 
 ```{r eval=FALSE}
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/simulations/power_simulation /2. WA-a violated/sim_2_4/sim_2_4a/utillity.R")
+source("../../../../functions/utillity.R")
 # read simulation design 
-SD <- readRDS("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/simulations/power_simulation /2. WA-a violated/sim_2_4/sim_2_4a/factorial_design.RDS")
+SD <- readRDS("factorial_design.RDS")
 n_seed = 6
 nsim = 1000
 

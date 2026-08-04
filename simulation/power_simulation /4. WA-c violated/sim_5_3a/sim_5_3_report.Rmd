@@ -63,7 +63,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE,
                       fig.pos = 'H', cache = FALSE, 
                       eval = FALSE)
 # load functions
-source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
+# not part of this repository (a helper file from another project); the
+# chunks below are knit with eval = FALSE, so it is not needed
+#source("~/Research/LMM_Project/dgm simutlations/R_functions.R")
 ```
 
 <!-- Functions -->
@@ -90,9 +92,9 @@ Availability depends on time, with linear treatment effect
 
 
 ```{r}
-source("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/simulations/power_simulation /4. WA-c violated/sim_5_3a/utillity.R")
+source("../../../../functions/utillity.R")
 # read simulation design 
-SD <- readRDS("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/simulations/power_simulation /4. WA-c violated/sim_5_3a/factorial_design.RDS")
+SD <- readRDS("factorial_design.RDS")
 n_seed = 27
 nsim = 1000
 truth_hypothesis = "H1"

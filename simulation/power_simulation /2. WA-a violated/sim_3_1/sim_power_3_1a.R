@@ -3,8 +3,8 @@ rm(list = ls(all = TRUE))
 #setwd("~/Documents/Research/causal-excursion-multi-treatment-binary-outcome/simulations/power_simulation /2. WA-a violated/sim_3_1/sim_3_1a/")
 # grab factorial design
 SD <- readRDS("factorial_design.RDS")
-source("wcls_cat_trt_binary_outcome.R")
-source("utillity.R")
+source("../../../../functions/emee_catA.R")
+source("../../../../functions/utillity.R")
 
 # calculate either type1 error(H0) or power(H1) 
 truth_hypothesis = "H1"
@@ -197,7 +197,7 @@ for (i in setting_start:setting_end) {
     avail_varname = "I"
     
     # Fit TQ estimator
-    fit_TQ  <- wcls_categorical_treatment(
+    fit_TQ  <- emee_catA(
       dta = dta,
       id_varname = "userid",
       decision_time_varname = "time",
