@@ -82,7 +82,13 @@ CONTROL   <- c("decision_index", "age", "gender", "employment_1", "employment_2"
 CONTROL_C <- c("decision_index", "age", "gender", "employment_1", "employment_2",
                "AUDIT_harmful", "AUDIT_atRisk", "binary_outcome.lag")
 
-fit_emee <- function(moderator, control, d = dta, ptilde = NULL) {
+## tilde p is set to the trial's randomization probability, so that J_t = 1 throughout,
+## matching Section 5.1 of the paper. The estimator's own default is 1/3 per level.
+N_TIME    <- length(unique(dta$decision_index))
+PTILDE    <- matrix(rep(c(0.4, 0.3, 0.3), times = N_TIME), ncol = 3, byrow = TRUE)
+PTILDE_EQ <- matrix(rep(1/3, 3 * N_TIME), ncol = 3)
+
+fit_emee <- function(moderator, control, d = dta, ptilde = PTILDE) {
   wcls_categorical_treatment(
     dta = d, id_varname = "ID", decision_time_varname = "decision_index",
     treatment_varname = "treatment_cate", outcome_varname = "binary_outcome",
@@ -237,9 +243,7 @@ print(round(data.frame(`GEE-ind`  = out_c[["GEE-ind"]]$Estimate  - out_c$EMEE$Es
 ## ==================================================== the Appendix C equivalence claim
 cat("\n\n================ equivalence check: f_t = g_t = 1, J_t = 1 ================\n\n")
 
-n_time <- length(unique(dta$decision_index))
-ptilde_equal_p <- matrix(rep(c(0.4, 0.3, 0.3), times = n_time), ncol = 3, byrow = TRUE)
-emee_plain <- fit_emee(moderator = c(), control = c(), ptilde = ptilde_equal_p)
+emee_plain <- fit_emee(moderator = c(), control = c())
 gee_plain <- geeglm(binary_outcome ~ A1 + A2, data = dta, id = idnum,
                     corstr = "independence", family = poisson(link = "log"))
 ybar <- tapply(dta$binary_outcome, dta$treatment_cate, mean)
@@ -255,8 +259,10 @@ cat("\nmax absolute difference:", max(abs(cmp$EMEE - cmp[["GEE-ind"]])),
     max(abs(cmp$EMEE - cmp$log_ratio_of_arm_means)), "\n")
 cat("arm-wise means of Y:", sprintf("%.6f", ybar), "\n")
 
-## with tilde p = 1/3 (the default) the weights are not 1 and the equality is only approximate
-emee_default_ptilde <- fit_emee(moderator = c(), control = c())
+## The same equality holds at tilde p = 1/3, where the weights are 0.833 and 1.111 rather
+## than 1: a model saturated in the treatment absorbs a weight that is constant within
+## treatment level, so the solution is the level-wise sample average either way.
+emee_default_ptilde <- fit_emee(moderator = c(), control = c(), ptilde = PTILDE_EQ)
 cat("\nEMEE with tilde p = 1/3 (J_t != 1):", sprintf("%.6f", emee_default_ptilde$beta_hat), "\n")
 cat("exp():", sprintf("%.4f", exp(emee_default_ptilde$beta_hat)),
     "  alpha_0:", sprintf("%.6f", emee_default_ptilde$alpha_hat[1]), "\n")
