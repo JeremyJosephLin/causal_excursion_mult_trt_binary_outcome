@@ -85,7 +85,7 @@ compute_tau_endoAvail <- function(gt, alpha, ft, beta, pt, gamma3, gamma4, gamma
   tau[1] <- 0.5
   EYt[1] <- 0 #not going to calculate this, set to 0 for initialization purposes
   for (t in 2:m) {
-    sum_pefbeta <- compute_sum_pefbeta(pt = pt[t-1, ], this_f_t = ft_t[t-1, ], beta = beta)
+    sum_pefbeta <- compute_sum_pefbeta(pt = pt[t-1, ], this_f_t = ft[t-1, ], beta = beta)
     EYt[t] <- (pt[t-1,1] + sum_pefbeta) * exp(as.numeric(gt[t-1,] %*% alpha))
     tau[t] <- 0.5 + gamma3 * pt[t-1, 2] * tau[t-1] + gamma4 * pt[t-1, 3] * tau[t-1]+
       gamma5 * EYt[t] * tau[t-1]
