@@ -73,7 +73,7 @@ pipelines, kept for the record; they do not reproduce the published tables. See
 `simulation/consistency_sim/README.md`.
 
 **Sample size formula simulations (Supplementary Section D).** One folder per working
-assumption under `simulation/power_simulation /`. Within a folder,
+assumption under `simulation/power_simulation/`. Within a folder,
 
 ```sh
 Rscript compute_factorial_design.R                      # writes factorial_design.RDS here
